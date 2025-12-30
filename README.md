@@ -1,97 +1,206 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# barKoder React Native Demo App
 
-# Getting Started
+This repository contains a **public, free-to-use React Native demo application** showcasing the capabilities of the **barKoder Barcode Scanner SDK**.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+The app is designed as a **reference implementation and learning tool** for developers who want to explore different barcode scanning modes, understand performance trade-offs, and see practical examples of advanced scanning features.
 
-## Step 1: Start Metro
+## Purpose of This Repository
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+This project exists to:
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- Demonstrate how to integrate the barKoder SDK in a React Native app
+- Showcase multiple barcode scanning modes and advanced features
+- Serve as a **starting point or reference** for custom implementations
+- Help developers compare scanning modes based on use case and performance
 
-```sh
-# Using npm
-npm start
+⚠️ This app is **not intended for production use**. It is a demo and reference application only.
 
-# OR using Yarn
-yarn start
-```
+## Features & Showcases
 
-## Step 2: Build and run your app
+### Anyscan (Universal Mode)
+Automatically scans all supported barcode types without prior configuration.
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+- Supports 1D, 2D, and specialized barcodes
+- Useful when the barcode type is unknown
+- Loads multiple scanning models, which may increase startup time on older devices
 
-### Android
+**Best for:** mixed or unknown barcode environments  
+**For optimal performance:** use a dedicated scanning mode when possible
 
-```sh
-# Using npm
-npm run android
+### All 1D Barcodes
+Optimized mode for linear (1D) barcodes.
 
-# OR using Yarn
-yarn android
-```
+Examples include:
+- EAN / UPC
+- Code 128
+- Code 39
 
-### iOS
+**Benefits:**
+- Faster scanning
+- Lower CPU usage
+- Ideal for retail, logistics, and inventory workflows
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+### All 2D Barcodes
+Dedicated scanning mode for matrix-based barcodes.
 
-```sh
-bundle install
-```
+Examples include:
+- QR Code
+- Data Matrix
+- Aztec
+- PDF417
 
-Then, and every time you update your native dependencies, run:
+**Benefits:**
+- Faster than Anyscan when only 2D barcodes are expected
+- Reduced processing overhead
 
-```sh
-bundle exec pod install
-```
+### MRZ Scanning
+Specialized mode for **Machine Readable Zone (MRZ)** detection.
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+Typical use cases:
+- Passports
+- National ID cards
+- Driver licenses
+- Boarding passes
 
-```sh
-# Using npm
-npm run ios
+**Notes:**
+- Uses dedicated OCR models
+- Should only be enabled when MRZ scanning is required
+- Demonstrates document-focused scanning workflows
 
-# OR using Yarn
-yarn ios
-```
+### DotCode Scanning
+Scanning mode optimized for **DotCode** symbology.
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+Common use cases:
+- Pharmaceutical packaging
+- Industrial and manufacturing environments
+- Inkjet-printed codes
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+**Benefits:**
+- Improved detection on low-contrast or distorted prints
 
-## Step 3: Modify your app
+### Scan from Gallery
+Allows scanning barcodes from images stored on the device.
 
-Now that you have successfully run the app, let's make changes!
+- Supports photos and screenshots
+- Useful for offline workflows or post-capture processing
+- Image quality directly affects detection accuracy
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+### AR Scanning Mode
+Augmented Reality showcase that visually highlights detected barcodes in real time.
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+**Purpose:**
+- Demonstrates advanced tracking capabilities
+- Visual feedback in multi-barcode environments
+- Interactive scanning experience
 
-## Congratulations! :tada:
+This mode is intended as a **technology showcase**, not a production pattern.
 
-You've successfully run and modified your React Native App. :partying_face:
+## Continuous Scanning
 
-### Now what?
+The demo app supports **Continuous Scanning**, which can be enabled in **any scanning mode**.
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+When enabled, the scanner remains active after a successful scan and continues scanning additional barcodes automatically.
 
-# Troubleshooting
+### How It Works
+- Continuous Scanning is controlled via a **toggle in the Settings**
+- A **Duplicate Delay** can be configured to control how often the same barcode can be reported again
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+### Duplicate Delay Options
+The duplicate delay defines the minimum time between consecutive scans of the same barcode:
 
-# Learn More
+- **0 seconds** – scans as fast as the device allows  
+  (on faster devices this may result in multiple scans per second)
+- **1 second**
+- **2 seconds**
+- Up to **10 seconds**
 
-To learn more about React Native, take a look at the following resources:
+### Use Cases
+- High-throughput scanning
+- Inventory counting
+- Batch processing
+- Industrial and logistics workflows
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+For optimal performance and accuracy, the duplicate delay should be chosen based on device speed and scanning environment.
+
+## App Structure
+
+The app is structured around **mode-based navigation**, where each scanning mode:
+
+- Initializes only the required SDK components
+- Demonstrates best-practice configuration
+- Is isolated for easier understanding and experimentation
+
+This approach allows developers to:
+- Compare scanning behavior between modes
+- Understand when to use each mode
+- Avoid unnecessary model loading
+
+## Performance Notes
+
+- Universal modes load more models and may impact startup time on slower devices
+- Dedicated modes are faster and more efficient
+- Advanced modes (MRZ, AR) should only be enabled when needed
+- Continuous scanning with a 0-second duplicate delay may significantly increase scan frequency on high-performance devices
+
+## SDK License & Trial
+
+The barKoder React Native Demo App is **free to use as a sample and reference project**.
+
+However, the **barKoder Barcode Scanner SDK itself requires a valid license** in order to function.
+
+### Trial License
+To run the demo app and explore the scanning features, you can obtain a **free trial license** from:
+
+https://barkoder.com/trial
+
+The trial license allows you to:
+- Test all supported scanning modes
+- Explore performance and device compatibility
+- Evaluate the SDK for your use case
+
+### Production Use
+For production applications or long-term use, a **commercial license** is required.
+
+This repository does not include a license key. You must supply your own license when running the app.
+
+## Requirements
+
+- React Native environment (Android & iOS)
+- Camera permissions
+- Physical device recommended for best scanning performance
+
+Some features may require additional configuration depending on platform and SDK setup.
+
+
+## Usage & License
+
+This repository is:
+- **Public**
+- **Free to use**
+- Intended as a **demo and reference application**
+
+You are free to:
+- Clone
+- Modify
+- Use parts of the code in your own projects
+
+Refer to the repository license for exact terms.
+
+---
+
+## Contributions
+
+Contributions, improvements, and fixes are welcome.
+
+If you find issues or want to enhance the demo:
+- Open an issue
+- Submit a pull request
+- Suggest improvements to documentation or examples
+
+---
+
+## Additional Resources
+
+For SDK documentation, integration guides, and feature details, refer to the official barKoder documentation and resources.
