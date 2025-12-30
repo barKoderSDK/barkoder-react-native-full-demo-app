@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Linking, Alert, ScrollView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Linking, Alert, FlatList, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -24,6 +24,26 @@ const is1D = (type: string) => {
   return BARCODE_TYPES_1D.some(t => normalize(t.label) === normalizedType || normalize(t.id) === normalizedType);
 };
 
+const BarcodeHeader = ({ item }: { item: { text: string, type: string, image?: string } }) => (
+  <>
+    <View style={styles.imageCard}>
+      {item.image ? (
+        <Image source={{ uri: item.image }} style={styles.barcodeImage} resizeMode="contain" />
+      ) : (
+        <View style={styles.placeholderImage}>
+          {is1D(item.type) ? (
+            <Icon1D width={64} height={64} />
+          ) : (
+            <Icon2D width={64} height={64} />
+          )}
+        </View>
+      )}
+    </View>
+
+    <Text style={styles.sectionLabel}>DATA</Text>
+  </>
+);
+
 const BarcodeDetailsScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<BarcodeDetailsScreenRouteProp>();
@@ -38,6 +58,18 @@ const BarcodeDetailsScreen = () => {
     const url = 'https://www.google.com/search?q=' + encodeURIComponent(item.text);
     Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
   };
+
+  const detailsData = [
+    { id: 'type', label: 'Barcode Type', value: item.type },
+    { id: 'value', label: 'Value', value: item.text, multiline: true }
+  ];
+
+  const renderItem = ({ item: detail }: { item: { id: string, label: string, value: string, multiline?: boolean } }) => (
+    <View style={styles.infoCard}>
+      <Text style={styles.dataLabel}>{detail.label}</Text>
+      <Text style={detail.multiline ? styles.dataValueMultiline : styles.dataValue}>{detail.value}</Text>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -54,33 +86,13 @@ const BarcodeDetailsScreen = () => {
           <Text style={styles.headerTitle}>Barcode Details</Text>
         </View>
 
-        <ScrollView contentContainerStyle={styles.content}>
-            <View style={styles.imageCard}>
-                {item.image ? (
-                    <Image source={{ uri: item.image }} style={styles.barcodeImage} resizeMode="contain" />
-                ) : (
-                    <View style={styles.placeholderImage}>
-                        {is1D(item.type) ? (
-                            <Icon1D width={64} height={64} />
-                        ) : (
-                            <Icon2D width={64} height={64} />
-                        )}
-                    </View>
-                )}
-            </View>
-
-            <Text style={styles.sectionLabel}>DATA</Text>
-
-            <View style={styles.infoCard}>
-                <Text style={styles.dataLabel}>Barcode Type</Text>
-                <Text style={styles.dataValue}>{item.type}</Text>
-            </View>
-
-            <View style={styles.infoCard}>
-                <Text style={styles.dataLabel}>Value</Text>
-                <Text style={styles.dataValueMultiline}>{item.text}</Text>
-            </View>
-        </ScrollView>
+        <FlatList
+          data={detailsData}
+          renderItem={renderItem}
+          keyExtractor={detail => detail.id}
+          ListHeaderComponent={<BarcodeHeader item={item} />}
+          contentContainerStyle={styles.content}
+        />
 
         <View style={styles.bottomBar}>
             <TouchableOpacity style={styles.actionButton} onPress={handleCopy}>
