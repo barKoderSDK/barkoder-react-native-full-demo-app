@@ -174,7 +174,52 @@ This repository does not include a license key. You must supply your own license
 Some features may require additional configuration depending on platform and SDK setup.
 
 
-## Usage & License
+## Usage
+
+### Setting up the License Key
+
+This app uses `react-native-dotenv` to manage environment variables. You need to provide a valid barKoder license key to run the app.
+
+1.  Create a file named `.env` in the root directory of the project (same level as `package.json`).
+2.  Add your license key to the file:
+
+    ```env
+    BARKODER_LICENSE_KEY=your_license_key_here
+    ```
+
+    > **Note:** You can obtain a free trial license from [https://barkoder.com/trial](https://barkoder.com/trial).
+
+### Running the App
+
+To start the application on a connected Android device or emulator:
+
+```bash
+npx react-native run-android
+```
+
+For iOS (macOS only):
+
+```bash
+npx react-native run-ios
+```
+
+### Building the Android APK
+
+To build a release APK for Android:
+
+1.  Navigate to the `android` directory:
+    ```bash
+    cd android
+    ```
+2.  Run the Gradle build command:
+    ```bash
+    gradlew :app:assembleRelease
+    ```
+
+The generated APK will be located at:
+`android/app/build/outputs/apk/release/app-release.apk`
+
+## License
 
 This repository is:
 - **Public**
