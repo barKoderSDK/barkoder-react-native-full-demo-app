@@ -180,7 +180,7 @@ Some features may require additional configuration depending on platform and SDK
 To get the code, clone the repository from GitHub:
 
 ```bash
-git clone https://github.com/barkoder/barkoder-react-native-app.git
+git clone https://github.com/barKoderSDK/barkoder-react-native-full-demo-app.git
 cd barkoder-react-native-app
 ```
 
