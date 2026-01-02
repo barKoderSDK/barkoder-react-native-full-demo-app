@@ -173,6 +173,26 @@ This repository does not include a license key. You must supply your own license
 
 Some features may require additional configuration depending on platform and SDK setup.
 
+## Getting Started
+
+### Cloning the Repository
+
+To get the code, clone the repository from GitHub:
+
+```bash
+git clone https://github.com/barkoder/barkoder-react-native-app.git
+cd barkoder-react-native-app
+```
+
+### Installing Dependencies
+
+After cloning, navigate to the project directory and install the dependencies:
+
+```bash
+npm install
+# or
+yarn install
+```
 
 ## Usage
 
