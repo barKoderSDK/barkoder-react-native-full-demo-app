@@ -68,6 +68,8 @@ Typical use cases:
 - Should only be enabled when MRZ scanning is required
 - Demonstrates document-focused scanning workflows
 
+**Important:** MRZ scanning relies on dedicated OCR models that must be activated by a valid barKoder license key. Without a supplied license the OCR/MRZ models will not be available and MRZ scanning will not function.
+
 ### DotCode Scanning
 Scanning mode optimized for **DotCode** symbology.
 
@@ -208,6 +210,8 @@ This app uses `react-native-dotenv` to manage environment variables. You need to
     ```
 
     > **Note:** You can obtain a free trial license from [https://barkoder.com/trial](https://barkoder.com/trial).
+
+    **Important:** Supplying a valid license key activates the SDK's scanning models (for example MRZ). Advanced, model-based scanning modes require an activated license and will be disabled or operate in a limited fallback state without one.
 
 ### Running the App
 

@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import LogoBarkoder from '../assets/images/logo_barkoder.svg';
+import LogoBarkoderWhite from '../assets/images/logo_barkoder_white.svg';
 
 interface TopBarProps {
   /** Optional custom style for the container */
@@ -17,6 +18,8 @@ interface TopBarProps {
   onClose?: () => void;
   /** Position of the logo: 'center' (default) or 'left' */
   logoPosition?: 'left' | 'center';
+  /** Whether to use a transparent background (for camera/scanner mode) */
+  transparent?: boolean;
 }
 
 /**
@@ -28,8 +31,11 @@ const TopBar = ({
   style, 
   onMenuPress, 
   onClose, 
-  logoPosition = 'center' 
+  logoPosition = 'center',
+  transparent = false
 }: TopBarProps) => {
+
+  const iconColor = transparent ? '#fff' : '#000';
 
   // --- Render Helpers ---
 
@@ -40,20 +46,21 @@ const TopBar = ({
         onPress={onClose} 
         style={[styles.closeButton, logoPosition === 'left' && styles.marginRight]}
       >
-        <MaterialIcons name="close" size={28} color="#000" />
+        <MaterialIcons name="close" size={28} color={iconColor} />
       </TouchableOpacity>
     );
   };
 
-  const renderLogo = () => (
-    <LogoBarkoder width={120} height={30} />
-  );
+  const renderLogo = () => {
+    const Logo = transparent ? LogoBarkoderWhite : LogoBarkoder;
+    return <Logo width={120} height={30} />;
+  };
 
   const renderMenuButton = () => {
     if (!onMenuPress) return null;
     return (
       <TouchableOpacity onPress={onMenuPress}>
-        <MaterialIcons name="settings" size={28} color="#333" />
+        <MaterialIcons name="settings" size={28} color={iconColor} />
       </TouchableOpacity>
     );
   };
@@ -79,7 +86,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
   // Styles for 'center' layout
   sideContainer: {

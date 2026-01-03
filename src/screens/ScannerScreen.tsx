@@ -129,7 +129,11 @@ const ScannerScreen = () => {
          {activeButton !== 'settings' && (
             <View style={styles.topBarBackground}>
                 <SafeAreaView edges={['top']}>
-                    <TopBar onMenuPress={handleMenuPress} onClose={() => navigation.goBack()} />
+                    <TopBar 
+                        transparent={true} 
+                        onMenuPress={handleMenuPress} 
+                        onClose={() => navigation.goBack()} 
+                    />
                 </SafeAreaView>
             </View>
          )}
@@ -197,7 +201,7 @@ const styles = StyleSheet.create({
     zIndex: 30,
   },
   topBarBackground: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
   bottomContainer: {
     position: 'absolute',
