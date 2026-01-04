@@ -11,6 +11,13 @@ import { HistoryService } from '../services/HistoryService';
 const ALL_TYPES = [...BARCODE_TYPES_1D, ...BARCODE_TYPES_2D];
 const DEFAULT_ENABLED = ['ean13', 'upcA', 'code128', 'qr', 'datamatrix'];
 
+/**
+ * Determines which barcode types should be initially enabled based on the scanning mode.
+ * Different modes enable different barcode types by default for optimized performance.
+ * 
+ * @param mode - The scanning mode (e.g., MODE_1D, MODE_2D, CONTINUOUS, etc.)
+ * @returns Object mapping barcode type IDs to boolean enabled states
+ */
 const getInitialEnabledTypes = (mode: string) => {
     const types: {[key: string]: boolean} = {};
     ALL_TYPES.forEach(t => { 
@@ -33,6 +40,17 @@ const getInitialEnabledTypes = (mode: string) => {
     return types;
 };
 
+/**
+ * Returns the default scanner settings configuration for a given scanning mode.
+ * Each mode has optimized settings for its specific use case:
+ * - CONTINUOUS: Fast scanning with no delays
+ * - MULTISCAN: Multiple barcodes with caching
+ * - VIN/DPM: Slow, high-resolution scanning with ROI
+ * - MRZ/AR_MODE/DOTCODE: Specialized configurations
+ * 
+ * @param currentMode - The scanning mode to configure
+ * @returns ScannerSettings object with mode-specific defaults
+ */
 const getInitialSettings = (currentMode: string): ScannerSettings => {
     const initialSettings: ScannerSettings = {
         compositeMode: false,
@@ -99,18 +117,59 @@ const getInitialSettings = (currentMode: string): ScannerSettings => {
     return initialSettings;
 };
 
+/**
+ * Custom hook that manages all scanner-related logic and state.
+ * Handles barcode scanning, configuration, settings, and user interactions.
+ * 
+ * Features:
+ * - Barcode type configuration and toggling
+ * - Continuous vs single-scan modes
+ * - Camera controls (flash, zoom, camera switching)
+ * - Settings persistence across app sessions
+ * - Scan result management and history
+ * - Mode-specific optimizations
+ * 
+ * @param mode - The scanning mode to initialize with
+ * @returns Object containing all scanner state and control functions
+ */
 export const useScannerLogic = (mode: string) => {
+    // State: Scanned barcode results
     const [scannedItems, setScannedItems] = useState<Array<{text: string, type: string, image?: string}>>([]);
+    
+    // State: Which barcode types are currently enabled for scanning
     const [enabledTypes, setEnabledTypes] = useState<{[key: string]: boolean}>(() => getInitialEnabledTypes(mode));
+    
+    // State: Camera flash on/off
     const [isFlashOn, setIsFlashOn] = useState(false);
+    
+    // State: Camera zoom level (1.0 = normal, 1.5 = zoomed)
     const [zoomLevel, setZoomLevel] = useState(1.0);
+    
+    // State: Selected camera ID ('0' = back, '1' = front)
     const [selectedCameraId, setSelectedCameraId] = useState<string>('0');
+    
+    // State: Whether scanning is paused (used for single-scan mode to show tap-to-continue overlay)
     const [isScanningPaused, setIsScanningPaused] = useState(false);
+    
+    // State: Base64 image of the frozen camera frame when paused
     const [frozenImage, setFrozenImage] = useState<string | null>(null);
+    
+    // State: Current scanner configuration settings
     const [settings, setSettings] = useState<ScannerSettings>(() => getInitialSettings(mode));
     
+    // Ref: Reference to the Barkoder SDK instance
     const barkoderRef = useRef<Barkoder | null>(null);
 
+    /**
+     * Updates the Barkoder SDK configuration with new enabled barcode types.
+     * Different barcode types require different configuration classes:
+     * - BarcodeConfigWithLength: For types with variable length (Code128, Code93, etc.)
+     * - BarcodeConfigWithDpmMode: For 2D codes with DPM support (QR, DataMatrix)
+     * - Code39BarcodeConfig: Special config for Code39
+     * - IdDocumentBarcodeConfig: For ID document scanning
+     * 
+     * @param newEnabledTypes - Object mapping barcode type IDs to enabled state
+     */
     const updateBarkoderConfig = useCallback((newEnabledTypes: {[key: string]: boolean}) => {
         if (!barkoderRef.current) return;
     
@@ -144,6 +203,19 @@ export const useScannerLogic = (mode: string) => {
         );
     }, []);
 
+    /**
+     * Starts the barcode scanning process and handles scan results.
+     * 
+     * Behavior:
+     * - Continuous mode: Keeps scanning without pausing
+     * - Single-scan mode: Pauses after each scan and freezes the camera frame
+     * 
+     * On successful scan:
+     * - Processes and formats the barcode image (full image + thumbnail)
+     * - Saves to scan history via HistoryService
+     * - Adds to scannedItems state
+     * - Pauses scanning if not in continuous mode
+     */
     const startScanning = useCallback(() => {
         barkoderRef.current?.startScanning((result) => {
           if (result.decoderResults && result.decoderResults.length > 0) {
@@ -187,6 +259,15 @@ export const useScannerLogic = (mode: string) => {
         });
     }, [settings.continuousScanning]);
 
+    /**
+     * Applies scanner settings to the Barkoder SDK instance.
+     * Called when settings are loaded or reset.
+     * 
+     * Note: Does not clear pause state to preserve current UI state.
+     * Use onUpdateSetting for user-initiated changes that should clear pause state.
+     * 
+     * @param newSettings - The scanner settings to apply
+     */
     const applySettings = useCallback((newSettings: ScannerSettings) => {
         if (!barkoderRef.current) return;
         
@@ -223,6 +304,18 @@ export const useScannerLogic = (mode: string) => {
         }
     }, [mode, startScanning]);
 
+    /**
+     * Updates a single scanner setting and applies it to the Barkoder SDK.
+     * User-initiated setting changes via the settings UI.
+     * 
+     * Special handling:
+     * - continuousScanning ON: Clears pause overlay, sets threshold, restarts scanning
+     * - continuousScanning OFF: Allows pause overlay to show on next scan
+     * - continuousThreshold: Restarts scanning to apply new threshold if continuous mode is active
+     * 
+     * @param key - The setting key to update
+     * @param value - The new value for the setting
+     */
     const onUpdateSetting = useCallback((key: keyof ScannerSettings, value: any) => {
         const newSettings = { ...settings, [key]: value };
         setSettings(newSettings);
@@ -264,7 +357,15 @@ export const useScannerLogic = (mode: string) => {
             case 'continuousScanning':
                 barkoderRef.current.setCloseSessionOnResultEnabled(!value);
                 if (value) {
-                    startScanning();
+                    // When enabling continuous scanning, set the threshold immediately
+                    barkoderRef.current.setThresholdBetweenDuplicatesScans(newSettings.continuousThreshold ?? 0);
+                    // Clear any pause state
+                    setIsScanningPaused(false);
+                    setFrozenImage(null);
+                    // Stop any ongoing scanning first
+                    barkoderRef.current.stopScanning();
+                    // Restart with new settings
+                    setTimeout(() => startScanning(), 100);
                 }
                 break;
             case 'decodingSpeed':
@@ -290,16 +391,35 @@ export const useScannerLogic = (mode: string) => {
                 break;
             case 'continuousThreshold':
                 barkoderRef.current.setThresholdBetweenDuplicatesScans(value);
+                // If continuous scanning is enabled, restart to apply new threshold
+                if (newSettings.continuousScanning) {
+                    barkoderRef.current.stopScanning();
+                    startScanning();
+                }
                 break;
         }
     }, [settings, mode, startScanning]);
 
+    /**
+     * Toggles a single barcode type on or off.
+     * Updates both state and SDK configuration.
+     * 
+     * @param typeId - The barcode type ID to toggle
+     * @param enabled - Whether to enable or disable the type
+     */
     const onToggleBarcodeType = useCallback((typeId: string, enabled: boolean) => {
         const newEnabledTypes = { ...enabledTypes, [typeId]: enabled };
         setEnabledTypes(newEnabledTypes);
         updateBarkoderConfig(newEnabledTypes);
     }, [enabledTypes, updateBarkoderConfig]);
 
+    /**
+     * Enables or disables all barcode types in a category (1D or 2D).
+     * Useful for bulk enabling/disabling groups of barcode types.
+     * 
+     * @param enabled - Whether to enable or disable all types
+     * @param category - '1D' for linear barcodes, '2D' for matrix barcodes
+     */
     const onEnableAllBarcodeTypes = useCallback((enabled: boolean, category: '1D' | '2D') => {
         const typesToUpdate = category === '1D' ? BARCODE_TYPES_1D : BARCODE_TYPES_2D;
         const newEnabledTypes = { ...enabledTypes };
@@ -310,6 +430,10 @@ export const useScannerLogic = (mode: string) => {
         updateBarkoderConfig(newEnabledTypes);
     }, [enabledTypes, updateBarkoderConfig]);
 
+    /**
+     * Resets all scanner settings and enabled types to their mode-specific defaults.
+     * Useful for returning to a known good configuration.
+     */
     const resetConfig = useCallback(() => {
         const newSettings = getInitialSettings(mode);
         setSettings(newSettings);
@@ -320,6 +444,16 @@ export const useScannerLogic = (mode: string) => {
         updateBarkoderConfig(newEnabledTypes);
     }, [mode, applySettings, updateBarkoderConfig]);
 
+    /**
+     * Opens the device image picker and scans a barcode from a selected photo.
+     * Used in Gallery mode to scan from saved images instead of live camera.
+     * 
+     * Process:
+     * 1. Launch image picker with base64 encoding
+     * 2. Send image to Barkoder SDK for processing
+     * 3. Add detected barcode to scannedItems
+     * 4. Show alert if no barcode found
+     */
     const scanImagePressed = useCallback(async () => {
         try {
           launchImageLibrary(
@@ -360,6 +494,19 @@ export const useScannerLogic = (mode: string) => {
         }
     }, []);
 
+    /**
+     * Callback fired when the BarkoderView component is created and ready.
+     * Performs initial SDK configuration and starts scanning.
+     * 
+     * Configuration steps:
+     * 1. Configure enabled barcode types
+     * 2. Set up image result handling (optimized for continuous scanning)
+     * 3. Apply all scanner settings
+     * 4. Apply mode-specific configurations (VIN, DPM, AR, etc.)
+     * 5. Start scanning (except in Gallery mode)
+     * 
+     * @param barkoder - The Barkoder SDK instance
+     */
     const onBarkoderViewCreated = useCallback((barkoder: Barkoder) => {
         barkoderRef.current = barkoder;
         
@@ -445,25 +592,37 @@ export const useScannerLogic = (mode: string) => {
         }
     }, [enabledTypes, settings, mode, scanImagePressed, startScanning]);
 
+    /**
+     * Toggles the camera flash on or off.
+     */
     const toggleFlash = useCallback(() => {
         const newFlashState = !isFlashOn;
         setIsFlashOn(newFlashState);
         barkoderRef.current?.setFlashEnabled(newFlashState);
     }, [isFlashOn]);
     
+    /**
+     * Toggles between normal (1.0x) and zoomed (1.5x) camera view.
+     */
     const toggleZoom = useCallback(() => {
         const newZoomLevel = zoomLevel === 1.0 ? 1.5 : 1.0;
         setZoomLevel(newZoomLevel);
         barkoderRef.current?.setZoomFactor(newZoomLevel);
     }, [zoomLevel]);
     
+    /**
+     * Switches between back camera (0) and front camera (1).
+     */
     const toggleCamera = useCallback(() => {
         const newCameraId = selectedCameraId === '0' ? '1' : '0';
         setSelectedCameraId(newCameraId);
         barkoderRef.current?.setCamera(parseInt(newCameraId, 10));
     }, [selectedCameraId]);
 
-    // Load settings on mount
+    /**
+     * Effect: Load saved settings from persistent storage on mount.
+     * Restores user's previous settings for this scanning mode.
+     */
     useEffect(() => {
         const loadSettings = async () => {
           const saved = await SettingsService.getSettings(mode);
@@ -486,7 +645,10 @@ export const useScannerLogic = (mode: string) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode]);
     
-    // Save settings when they change
+    /**
+     * Effect: Save settings to persistent storage whenever they change.
+     * Uses a 500ms debounce to avoid excessive file writes.
+     */
     useEffect(() => {
         const save = async () => {
             await SettingsService.saveSettings(mode, {
