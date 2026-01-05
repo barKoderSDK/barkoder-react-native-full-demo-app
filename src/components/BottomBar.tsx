@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Linking, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -11,6 +11,7 @@ type RootStackParamList = {
   Home: undefined;
   Scanner: { mode: string };
   History: undefined;
+  About: undefined;
 };
 
 /**
@@ -55,7 +56,7 @@ const BottomBar = () => {
 
         <TouchableOpacity 
           style={styles.tabItem}
-          onPress={() => Linking.openURL('https://barkoder.com/')}
+          onPress={() => navigation.navigate('About')}
         >
           <IconInfo width={24} height={24} color="#000" />
           <Text style={styles.tabLabel}>About</Text>

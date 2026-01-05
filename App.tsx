@@ -5,6 +5,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import ScannerScreen from './src/screens/ScannerScreen';
 import BarcodeDetailsScreen from './src/screens/BarcodeDetailsScreen';
 import HistoryScreen from './src/screens/RecentScanScreen';
+import AboutScreen from './src/screens/AboutScreen';
 import * as Sentry from '@sentry/react-native';
 import BootSplash from "react-native-bootsplash";
 
@@ -29,6 +30,7 @@ function App(): React.JSX.Element {
         <Stack.Screen name="Scanner" component={ScannerScreen} />
         <Stack.Screen name="BarcodeDetails" component={BarcodeDetailsScreen} />
         <Stack.Screen name="History" component={HistoryScreen} />
+        <Stack.Screen name="About" component={AboutScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
