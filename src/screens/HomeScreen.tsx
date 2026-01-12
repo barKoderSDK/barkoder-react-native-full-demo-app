@@ -53,23 +53,8 @@ const HomeScreen = () => {
     
     // Configure each barcode type with appropriate settings
     allTypes.forEach(type => {
-        let config;
-        if (['code128', 'code93', 'codabar', 'code11', 'msi'].includes(type.id)) {
-             config = new Barkoder.BarcodeConfigWithLength({ enabled: true });
-        } else if (['qr', 'qrMicro', 'datamatrix'].includes(type.id)) {
-             config = new Barkoder.BarcodeConfigWithDpmMode({ enabled: true });
-        } else if (type.id === 'code39') {
-             config = new Barkoder.Code39BarcodeConfig({ enabled: true });
-        } else if (type.id === 'idDocument') {
-             config = new Barkoder.IdDocumentBarcodeConfig({ 
-               enabled: true,
-               masterChecksum: Barkoder.IdDocumentMasterChecksumType.disabled
-             });
-        } else {
-             config = new Barkoder.BarcodeConfig({ enabled: true });
-        }
-        decoderConfig[type.id] = config;
-    });
+      decoderConfig[type.id] = new Barkoder.BarcodeConfig({ enabled: true });
+  });
 
     barkoder.configureBarkoder(
       new Barkoder.BarkoderConfig({
