@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { SvgProps } from 'react-native-svg';
-import { HomeSection } from '../types/home';
+import { HomeSection } from '../types/types';
 
 interface HomeGridProps {
   sections: HomeSection[];

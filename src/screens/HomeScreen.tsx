@@ -15,12 +15,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { BarkoderView, Barkoder } from 'barkoder-react-native';
 import { HistoryService } from '../services/HistoryService';
-import { RootStackParamList } from '../types/navigation';
-import { SECTIONS } from '../constants/homeSections';
+import { RootStackParamList } from '../types/types';
+import { SECTIONS } from '../constants/constants';
 import TopBar from '../components/TopBar';
 import BottomBar from '../components/BottomBar';
 import HomeGrid from '../components/HomeGrid';
-import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/settingTypes';
+import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/constants';
 import BgImage from '../assets/images/BG.svg';
 
 /**

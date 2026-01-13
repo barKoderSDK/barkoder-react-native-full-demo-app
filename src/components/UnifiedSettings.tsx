@@ -8,9 +8,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Barkoder } from 'barkoder-react-native';
-import { MODES } from '../constants/modes';
-import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/settingTypes';
-import { ScannerSettings } from '../types/ScannerSettings';
+import { MODES } from '../constants/constants';
+import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/constants';
+import { ScannerSettings } from '../types/types';
 import BgImage from '../assets/images/BG.svg';
 import SettingSwitch from './SettingSwitch';
 import SettingDropdown from './SettingDropdown';
@@ -232,8 +232,7 @@ const UnifiedSettings = ({
     } else if (isVinMode) {
         currentTypes = currentTypes.filter(t => ['code39', 'code128', 'datamatrix', 'qr'].includes(t.id));
     } else if (isMrsMode) {
-        const mrsTypes = ['code128', 'code93', 'code39', 'codabar', 'code11', 'msi', 'code25', 'interleaved25', 'itf14', 'iata25', 'matrix25', 'datalogic25', 'coop25', 'code32', 'telepen'];
-        currentTypes = currentTypes.filter(t => mrsTypes.includes(t.id));
+        return [];
     } else if (isMode1D && category === '2D') {
         return [];
     } else if (isMode2D && category === '1D') {
@@ -338,7 +337,11 @@ const UnifiedSettings = ({
         contentContainerStyle={styles.FlatListContent}
         data={[
             { key: 'general', render: () => <>{renderSectionHeader('General Settings')}{renderSettingsGroup(getGeneralSettings())}</> },
-            { key: 'decoding', render: () => <>{renderSectionHeader('Decoding Settings')}{renderSettingsGroup(getDecodingSettings())}</> },
+            { key: 'decoding', render: () => {
+                const decodingItems = getDecodingSettings();
+                if (decodingItems.length === 0) return null;
+                return <>{renderSectionHeader('Decoding Settings')}{renderSettingsGroup(decodingItems)}</>;
+            }},
             { key: '1d', render: () => renderBarcodeGroup('1D') },
             { key: '2d', render: () => renderBarcodeGroup('2D') },
             { key: 'reset', render: () => (

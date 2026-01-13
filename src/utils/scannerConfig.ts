@@ -1,15 +1,11 @@
 import { Barkoder } from 'barkoder-react-native';
-import { ScannerSettings } from '../types/ScannerSettings';
-import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/settingTypes';
-import { MODES } from '../constants/modes';
+import { ScannerSettings } from '../types/types';
+import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/constants';
+import { MODES } from '../constants/constants';
 
 const ALL_TYPES = [...BARCODE_TYPES_1D, ...BARCODE_TYPES_2D];
 const DEFAULT_ENABLED = ['ean13', 'upcA', 'code128', 'qr', 'datamatrix'];
 
-/**
- * Determines which barcode types should be initially enabled based on the scanning mode.
- * Different modes enable different barcode types by default for optimized performance.
- */
 export const getInitialEnabledTypes = (mode: string): {[key: string]: boolean} => {
     const types: {[key: string]: boolean} = {};
     
@@ -22,6 +18,8 @@ export const getInitialEnabledTypes = (mode: string): {[key: string]: boolean} =
             types[t.id] = true;
         } else if (mode === MODES.DOTCODE) {
             types[t.id] = t.id === 'dotcode';
+        } else if (mode === MODES.MRZ) {
+            types[t.id] = t.id === 'idDocument';
         } else if (mode === MODES.AR_MODE) {
             types[t.id] = ['qr', 'code128', 'code39', 'upcA', 'upcE', 'ean13', 'ean8'].includes(t.id);
         } else {
@@ -32,10 +30,6 @@ export const getInitialEnabledTypes = (mode: string): {[key: string]: boolean} =
     return types;
 };
 
-/**
- * Returns the default scanner settings configuration for a given scanning mode.
- * Each mode has optimized settings for its specific use case.
- */
 export const getInitialSettings = (currentMode: string): ScannerSettings => {
     const baseSettings: ScannerSettings = {
         compositeMode: false,
@@ -52,7 +46,6 @@ export const getInitialSettings = (currentMode: string): ScannerSettings => {
         continuousThreshold: 0
     };
 
-    // Mode-specific optimizations
     const modeSettings: Partial<ScannerSettings> = (() => {
         switch (currentMode) {
             case MODES.CONTINUOUS:
@@ -113,9 +106,6 @@ export const getInitialSettings = (currentMode: string): ScannerSettings => {
     return { ...baseSettings, ...modeSettings };
 };
 
-/**
- * Creates the appropriate barcode configuration object based on barcode type.
- */
 export const createBarcodeConfig = (typeId: string, enabled: boolean) => {
     if (['code128', 'code93', 'codabar', 'code11', 'msi'].includes(typeId)) {
         return new Barkoder.BarcodeConfigWithLength({ enabled });

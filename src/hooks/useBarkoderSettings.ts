@@ -1,53 +1,35 @@
 import { useCallback } from 'react';
 import { Barkoder } from 'barkoder-react-native';
-import { ScannerSettings } from '../types/ScannerSettings';
-import { MODES } from '../constants/modes';
+import { ScannerSettings } from '../types/types';
+import { MODES } from '../constants/constants';
 
-/**
- * Hook for applying scanner settings to Barkoder instance
- */
 export const useBarkoderSettings = (
     barkoderRef: React.RefObject<Barkoder | null>,
     mode: string,
     startScanning: () => void
 ) => {
-    /**
-     * Applies all scanner settings to the Barkoder SDK instance.
-     */
     const applySettings = useCallback((settings: ScannerSettings) => {
         if (!barkoderRef.current) return;
         
-        const shouldEnableImages = !(settings.continuousScanning && (settings.continuousThreshold ?? 0) < 10);
-        
-        // Image settings
-        barkoderRef.current.setImageResultEnabled(shouldEnableImages);
-        barkoderRef.current.setBarcodeThumbnailOnResultEnabled(shouldEnableImages);
-  
-        // General settings
+        barkoderRef.current.setImageResultEnabled(true);
+        barkoderRef.current.setBarcodeThumbnailOnResultEnabled(true);
         barkoderRef.current.setEnableComposite(settings.compositeMode ? 1 : 0);
         barkoderRef.current.setPinchToZoomEnabled(settings.pinchToZoom);
         barkoderRef.current.setLocationInPreviewEnabled(settings.locationInPreview);
         barkoderRef.current.setRegionOfInterestVisible(settings.regionOfInterest);
         
-        // Region of Interest
-        if (settings.regionOfInterest && (mode !== MODES.VIN && mode !== MODES.DPM)) {
+        if (settings.regionOfInterest && mode !== MODES.VIN && mode !== MODES.DPM) {
            barkoderRef.current.setRegionOfInterest(5, 5, 90, 90);
         }
         
-        // Feedback
         barkoderRef.current.setBeepOnSuccessEnabled(settings.beepOnSuccess);
         barkoderRef.current.setVibrateOnSuccessEnabled(settings.vibrateOnSuccess);
-        
-        // Quality enhancement
         barkoderRef.current.setUpcEanDeblurEnabled(settings.scanBlurred);
         barkoderRef.current.setEnableMisshaped1DEnabled(settings.scanDeformed);
-        
-        // Scanning behavior
         barkoderRef.current.setCloseSessionOnResultEnabled(!settings.continuousScanning);
         barkoderRef.current.setDecodingSpeed(settings.decodingSpeed);
         barkoderRef.current.setBarkoderResolution(settings.resolution);
         
-        // AR Mode
         if (mode === MODES.AR_MODE && settings.arMode) {
             barkoderRef.current.setARMode(settings.arMode);
             barkoderRef.current.setARLocationType(settings.arLocationType!);
@@ -56,15 +38,11 @@ export const useBarkoderSettings = (
             barkoderRef.current.setARDoubleTapToFreezeEnabled(settings.arDoubleTapToFreeze!);
         }
         
-        // Continuous scanning threshold
         if (settings.continuousScanning) {
             barkoderRef.current.setThresholdBetweenDuplicatesScans(settings.continuousThreshold ?? 0);
         }
     }, [barkoderRef, mode]);
 
-    /**
-     * Updates a single setting and applies it to the Barkoder SDK.
-     */
     const updateSingleSetting = useCallback((
         key: keyof ScannerSettings, 
         value: any,
@@ -72,12 +50,10 @@ export const useBarkoderSettings = (
         clearPauseState: () => void
     ): ScannerSettings => {
         const newSettings = { ...currentSettings, [key]: value };
-        
         if (!barkoderRef.current) return newSettings;
     
-        const shouldEnableImages = !(newSettings.continuousScanning && (newSettings.continuousThreshold ?? 0) < 10);
-        barkoderRef.current.setImageResultEnabled(shouldEnableImages);
-        barkoderRef.current.setBarcodeThumbnailOnResultEnabled(shouldEnableImages);
+        barkoderRef.current.setImageResultEnabled(true);
+        barkoderRef.current.setBarcodeThumbnailOnResultEnabled(true);
     
         switch (key) {
             case 'compositeMode':

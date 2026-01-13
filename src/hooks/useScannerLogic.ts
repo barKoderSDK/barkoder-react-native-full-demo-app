@@ -2,15 +2,15 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { Barkoder } from 'barkoder-react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { ScannerSettings } from '../types/ScannerSettings';
-import { MODES } from '../constants/modes';
+import { ScannerSettings } from '../types/types';
+import { MODES } from '../constants/constants';
 import { SettingsService } from '../services/SettingsService';
 import { HistoryService } from '../services/HistoryService';
 import { getInitialEnabledTypes, getInitialSettings, createBarcodeConfig } from '../utils/scannerConfig';
 import { useBarcodeConfig } from './useBarcodeConfig';
 import { useCameraControls } from './useCameraControls';
 import { useBarkoderSettings } from './useBarkoderSettings';
-import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/settingTypes';
+import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/constants';
 
 const ALL_TYPES = [...BARCODE_TYPES_1D, ...BARCODE_TYPES_2D];
 
@@ -30,22 +30,15 @@ const ALL_TYPES = [...BARCODE_TYPES_1D, ...BARCODE_TYPES_2D];
  * @returns Object containing all scanner state and control functions
  */
 export const useScannerLogic = (mode: string) => {
-    // State
     const [scannedItems, setScannedItems] = useState<Array<{text: string, type: string, image?: string}>>([]);
     const [enabledTypes, setEnabledTypes] = useState<{[key: string]: boolean}>(() => getInitialEnabledTypes(mode));
     const [isScanningPaused, setIsScanningPaused] = useState(false);
     const [frozenImage, setFrozenImage] = useState<string | null>(null);
     const [settings, setSettings] = useState<ScannerSettings>(() => getInitialSettings(mode));
-    
     const barkoderRef = useRef<Barkoder | null>(null);
-
-    // Custom hooks for separated concerns
     const { updateBarkoderConfig, toggleBarcodeType, enableAllBarcodeTypes } = useBarcodeConfig(barkoderRef);
     const { isFlashOn, zoomLevel, selectedCameraId, toggleFlash, toggleZoom, toggleCamera } = useCameraControls(barkoderRef);
 
-    /**
-     * Starts the barcode scanning process and handles scan results.
-     */
     const startScanning = useCallback(() => {
         barkoderRef.current?.startScanning((result) => {
           if (result.decoderResults && result.decoderResults.length > 0) {
@@ -79,7 +72,6 @@ export const useScannerLogic = (mode: string) => {
             
             setScannedItems(prev => [newItem, ...prev]);
     
-            // Check current settings state to decide if we should pause
             setSettings(currentSettings => {
                 if (!currentSettings.continuousScanning) {
                     setIsScanningPaused(true);
@@ -93,44 +85,28 @@ export const useScannerLogic = (mode: string) => {
         });
     }, []);
 
-    // Settings management hook
     const { applySettings, updateSingleSetting } = useBarkoderSettings(barkoderRef, mode, startScanning);
 
-    /**
-     * Clears pause state (used when resuming or switching to continuous mode)
-     */
     const clearPauseState = useCallback(() => {
         setIsScanningPaused(false);
         setFrozenImage(null);
     }, []);
 
-    /**
-     * Updates a single scanner setting
-     */
     const onUpdateSetting = useCallback((key: keyof ScannerSettings, value: any) => {
         const newSettings = updateSingleSetting(key, value, settings, clearPauseState);
         setSettings(newSettings);
     }, [settings, updateSingleSetting, clearPauseState]);
 
-    /**
-     * Toggles a barcode type on or off
-     */
     const onToggleBarcodeType = useCallback((typeId: string, enabled: boolean) => {
         const newEnabledTypes = toggleBarcodeType(typeId, enabled, enabledTypes);
         setEnabledTypes(newEnabledTypes);
     }, [enabledTypes, toggleBarcodeType]);
 
-    /**
-     * Enables/disables all barcode types in a category
-     */
     const onEnableAllBarcodeTypes = useCallback((enabled: boolean, category: '1D' | '2D') => {
         const newEnabledTypes = enableAllBarcodeTypes(enabled, category, enabledTypes);
         setEnabledTypes(newEnabledTypes);
     }, [enabledTypes, enableAllBarcodeTypes]);
 
-    /**
-     * Resets all scanner settings and enabled types to their mode-specific defaults.
-     */
     const resetConfig = useCallback(() => {
         const newSettings = getInitialSettings(mode);
         const newEnabledTypes = getInitialEnabledTypes(mode);
@@ -142,9 +118,6 @@ export const useScannerLogic = (mode: string) => {
         updateBarkoderConfig(newEnabledTypes);
     }, [mode, applySettings, updateBarkoderConfig]);
 
-    /**
-     * Scans a barcode from a gallery image
-     */
     const scanImagePressed = useCallback(() => {
         try {
           launchImageLibrary(
@@ -191,19 +164,15 @@ export const useScannerLogic = (mode: string) => {
     const onBarkoderViewCreated = useCallback((barkoder: Barkoder) => {
         barkoderRef.current = barkoder;
         
-        // Configure barcode types
         const decoderConfig: any = {};
         ALL_TYPES.forEach(type => {
-            const enabled = !!enabledTypes[type.id];
-            decoderConfig[type.id] = createBarcodeConfig(type.id, enabled);
+            decoderConfig[type.id] = createBarcodeConfig(type.id, !!enabledTypes[type.id]);
         });
-    
-        const shouldEnableImages = !(settings.continuousScanning && (settings.continuousThreshold ?? 0) < 10);
     
         barkoder.configureBarkoder(
           new Barkoder.BarkoderConfig({
             decoder: new Barkoder.DekoderConfig(decoderConfig),
-            imageResultEnabled: shouldEnableImages,
+            imageResultEnabled: true,
             locationInImageResultEnabled: true,
             pinchToZoomEnabled: settings.pinchToZoom,
             locationInPreviewEnabled: settings.locationInPreview,
@@ -219,14 +188,13 @@ export const useScannerLogic = (mode: string) => {
         barkoder.setDecodingSpeed(settings.decodingSpeed);
         barkoder.setBarkoderResolution(settings.resolution);
         barkoder.setCloseSessionOnResultEnabled(!settings.continuousScanning);
+        barkoder.setBarcodeThumbnailOnResultEnabled(true);
         
         if (settings.continuousScanning) {
             barkoder.setThresholdBetweenDuplicatesScans(settings.continuousThreshold ?? 0);
         }
     
-        if (mode === MODES.CONTINUOUS) {
-            // No additional config needed
-        } else if (mode === MODES.MULTISCAN) {
+        if (mode === MODES.MULTISCAN) {
             barkoder.setMaximumResultsCount(200);
             barkoder.setMulticodeCachingDuration(3000);
             barkoder.setMulticodeCachingEnabled(true);
@@ -250,19 +218,16 @@ export const useScannerLogic = (mode: string) => {
             barkoder.setBarcodeTypeEnabled(Barkoder.BarcodeType.dotcode, true);
             barkoder.setRegionOfInterest(30, 40, 40, 9);
         }
-    
-        barkoder.setBarcodeThumbnailOnResultEnabled(shouldEnableImages);
-    
+        
         if (mode !== MODES.GALLERY) {
             startScanning();
         }
     }, [enabledTypes, settings, mode, scanImagePressed, startScanning]);
 
-    // Load saved settings on mount
     useEffect(() => {
         const loadSettings = async () => {
           const saved = await SettingsService.getSettings(mode);
-          if (saved) {
+          if (saved) {            
             if (saved.enabledTypes) {
                 setEnabledTypes(saved.enabledTypes);
             }

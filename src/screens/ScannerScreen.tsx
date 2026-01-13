@@ -15,7 +15,7 @@ import ScannedResultSheet from '../components/ScannedResultSheet';
 import BottomControls from '../components/BottomControls';
 import ScannedItemsList from '../components/ScannedItemsList';
 import { useScannerLogic } from '../hooks/useScannerLogic';
-import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/settingTypes';
+import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/constants';
 
 type RootStackParamList = {
   Scanner: { mode: string };

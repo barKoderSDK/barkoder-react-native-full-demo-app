@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import BgImage from '../assets/images/BG.svg';
 import { HistoryService, HistoryItem } from '../services/HistoryService';
-import { BARCODE_TYPES_1D } from '../constants/settingTypes';
+import { BARCODE_TYPES_1D } from '../constants/constants';
 import IconInfo from '../assets/icons/info.svg';
 import Icon1D from '../assets/icons/icon_1d.svg';
 import Icon2D from '../assets/icons/icon_2d.svg';

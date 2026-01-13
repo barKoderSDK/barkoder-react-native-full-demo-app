@@ -9,7 +9,7 @@ import IconCopy from '../assets/icons/icon_copy.svg';
 import IconSearch from '../assets/icons/icon_search.svg';
 import Icon1D from '../assets/icons/icon_1d.svg';
 import Icon2D from '../assets/icons/icon_2d.svg';
-import { BARCODE_TYPES_1D } from '../constants/settingTypes';
+import { BARCODE_TYPES_1D } from '../constants/constants';
 
 type RootStackParamList = {
   BarcodeDetails: { item: { text: string, type: string, image?: string } };
@@ -59,10 +59,37 @@ const BarcodeDetailsScreen = () => {
     Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
   };
 
-  const detailsData = [
-    { id: 'type', label: 'Barcode Type', value: item.type },
-    { id: 'value', label: 'Value', value: item.text, multiline: true }
-  ];
+  // Parse MRZ data into individual fields
+  const parseMRZData = (text: string) => {
+    const fields: { id: string, label: string, value: string }[] = [];
+    const lines = text.split('\n');
+    
+    lines.forEach(line => {
+      const match = line.match(/^([^:]+):\s*(.+)$/);
+      if (match) {
+        const key = match[1].trim();
+        const value = match[2].trim();
+        // Convert snake_case to Title Case
+        const label = key.split('_').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+        fields.push({ id: key, label, value });
+      }
+    });
+    
+    return fields;
+  };
+
+  const isMRZ = item.type.toLowerCase() === 'mrz';
+  const detailsData = isMRZ 
+    ? [
+        { id: 'type', label: 'Barcode Type', value: item.type },
+        ...parseMRZData(item.text)
+      ]
+    : [
+        { id: 'type', label: 'Barcode Type', value: item.type },
+        { id: 'value', label: 'Value', value: item.text, multiline: true }
+      ];
 
   const renderItem = ({ item: detail }: { item: { id: string, label: string, value: string, multiline?: boolean } }) => (
     <View style={styles.infoCard}>
