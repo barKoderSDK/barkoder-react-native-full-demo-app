@@ -23,35 +23,18 @@ import HomeGrid from '../components/HomeGrid';
 import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/constants';
 import BgImage from '../assets/images/BG.svg';
 
-/**
- * HomeScreen Component
- * 
- * This is the main entry point of the application. It displays a grid of available
- * scanner modes and allows the user to navigate to the scanner or perform a gallery scan.
- * 
- * Features:
- * - Displays scanner modes categorized by type (General, Showcase).
- * - Handles navigation to ScannerScreen with specific modes.
- * - Handles Gallery Scan functionality.
- * - Initializes a hidden BarkoderView to pre-load the engine (optional optimization).
- */
 const HomeScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const barkoderRef = React.useRef<Barkoder | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
-  /**
-   * Callback when the hidden BarkoderView is created.
-   * Configures the Barkoder engine with all supported barcode types.
-   */
   const onBarkoderViewCreated = (barkoder: Barkoder) => {
     barkoderRef.current = barkoder;
     
     const decoderConfig: any = {};
     const allTypes = [...BARCODE_TYPES_1D, ...BARCODE_TYPES_2D];
     
-    // Configure each barcode type with appropriate settings
     allTypes.forEach(type => {
       decoderConfig[type.id] = new Barkoder.BarcodeConfig({ enabled: true });
   });
@@ -64,12 +47,6 @@ const HomeScreen = () => {
     );
   };
 
-  /**
-   * Handles the press event on a grid item.
-   * - 'gallery': Opens the image picker.
-   * - 'url': Opens a URL in the browser.
-   * - 'mode': Navigates to the ScannerScreen with the selected mode.
-   */
   const handlePress = (item: any) => {
     if (item.id === 'gallery') {
       handleGalleryScan();
@@ -80,9 +57,6 @@ const HomeScreen = () => {
     }
   };
 
-  /**
-   * Logic for scanning an image from the gallery.
-   */
   const handleGalleryScan = () => {
       setIsLoading(true);
       launchImageLibrary({ mediaType: 'photo', selectionLimit: 1, includeBase64: true }, (response) => {

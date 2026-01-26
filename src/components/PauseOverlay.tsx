@@ -6,9 +6,6 @@ interface PauseOverlayProps {
   onResume: () => void;
 }
 
-/**
- * Overlay displayed when scanning is paused.
- */
 const PauseOverlay: React.FC<PauseOverlayProps> = ({ onResume }) => {
   return (
     <TouchableOpacity

@@ -86,13 +86,11 @@ export const useBarkoderSettings = (
             case 'continuousScanning':
                 barkoderRef.current.setCloseSessionOnResultEnabled(!value);
                 if (value) {
-                    // Turning ON continuous scanning
                     barkoderRef.current.setThresholdBetweenDuplicatesScans(newSettings.continuousThreshold ?? 0);
                     clearPauseState();
                     barkoderRef.current.stopScanning();
                     setTimeout(() => startScanning(), 100);
                 } else {
-                    // Turning OFF continuous scanning
                     clearPauseState();
                     barkoderRef.current.stopScanning();
                     setTimeout(() => startScanning(), 100);

@@ -21,7 +21,7 @@ export const getInitialEnabledTypes = (mode: string): {[key: string]: boolean} =
         } else if (mode === MODES.MRZ) {
             types[t.id] = t.id === 'idDocument';
         } else if (mode === MODES.VIN) {
-            types[t.id] = ['code39', 'code128', 'qr', 'datamatrix'].includes(t.id);
+            types[t.id] = ['code39', 'code128', 'qr', 'datamatrix', 'ocrText'].includes(t.id);
         } else if (mode === MODES.AR_MODE) {
             types[t.id] = ['qr', 'code128', 'code39', 'upcA', 'upcE', 'ean13', 'ean8'].includes(t.id);
         } else {
@@ -66,7 +66,6 @@ export const getInitialSettings = (currentMode: string): ScannerSettings => {
                     resolution: Barkoder.BarkoderResolution.FHD,
                     regionOfInterest: true,
                     scanDeformed: true,
-                    enableOCR: true,
                 };
                 
             case MODES.DPM:

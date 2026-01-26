@@ -14,21 +14,6 @@ import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/constants';
 
 const ALL_TYPES = [...BARCODE_TYPES_1D, ...BARCODE_TYPES_2D];
 
-/**
- * Custom hook that manages all scanner-related logic and state.
- * Handles barcode scanning, configuration, settings, and user interactions.
- * 
- * Features:
- * - Barcode type configuration and toggling
- * - Continuous vs single-scan modes
- * - Camera controls (flash, zoom, camera switching)
- * - Settings persistence across app sessions
- * - Scan result management and history
- * - Mode-specific optimizations
- * 
- * @param mode - The scanning mode to initialize with
- * @returns Object containing all scanner state and control functions
- */
 export const useScannerLogic = (mode: string) => {
     const [scannedItems, setScannedItems] = useState<Array<{text: string, type: string, image?: string}>>([]);
     const [enabledTypes, setEnabledTypes] = useState<{[key: string]: boolean}>(() => getInitialEnabledTypes(mode));
@@ -100,12 +85,22 @@ export const useScannerLogic = (mode: string) => {
     const onToggleBarcodeType = useCallback((typeId: string, enabled: boolean) => {
         const newEnabledTypes = toggleBarcodeType(typeId, enabled, enabledTypes);
         setEnabledTypes(newEnabledTypes);
-    }, [enabledTypes, toggleBarcodeType]);
+        
+        if (typeId === 'ocrText' && mode === MODES.VIN && barkoderRef.current) {
+            barkoderRef.current.setCustomOption('enable_ocr_functionality', enabled ? 1 : 0);
+        }
+    }, [enabledTypes, toggleBarcodeType, mode]);
 
     const onEnableAllBarcodeTypes = useCallback((enabled: boolean, category: '1D' | '2D') => {
         const newEnabledTypes = enableAllBarcodeTypes(enabled, category, enabledTypes);
         setEnabledTypes(newEnabledTypes);
-    }, [enabledTypes, enableAllBarcodeTypes]);
+        
+        if (category === '2D' && mode === MODES.VIN && barkoderRef.current) {
+            if (newEnabledTypes.ocrText) {
+                barkoderRef.current.setCustomOption('enable_ocr_functionality', enabled ? 1 : 0);
+            }
+        }
+    }, [enabledTypes, enableAllBarcodeTypes, mode]);
 
     const resetConfig = useCallback(() => {
         const newSettings = getInitialSettings(mode);
@@ -158,9 +153,7 @@ export const useScannerLogic = (mode: string) => {
         }
     }, []);
 
-    /**
-     * Initializes Barkoder when the view is created
-     */
+
     const onBarkoderViewCreated = useCallback((barkoder: Barkoder) => {
         barkoderRef.current = barkoder;
         
@@ -201,13 +194,11 @@ export const useScannerLogic = (mode: string) => {
         } else if (mode === MODES.VIN) {
             barkoder.setEnableVINRestrictions(true);
             barkoder.setRegionOfInterest(0, 35, 100, 30);
-            // OCR support for VIN
-            if (settings.enableOCR) {
+
+            if (enabledTypes.ocrText) {
                 barkoder.setCustomOption('enable_ocr_functionality', 1);
-                barkoder.setBarcodeTypeEnabled(Barkoder.BarcodeType.ocrText, true);
             } else {
                 barkoder.setCustomOption('enable_ocr_functionality', 0);
-                barkoder.setBarcodeTypeEnabled(Barkoder.BarcodeType.ocrText, false);
             }
         } else if (mode === MODES.DPM) {
             barkoder.setBarcodeTypeEnabled(Barkoder.BarcodeType.datamatrix, true);

@@ -13,9 +13,6 @@ interface SettingDropdownProps {
   isLast?: boolean;
 }
 
-/**
- * Reusable dropdown component for settings.
- */
 const SettingDropdown = ({ label, options, selectedValue, onSelect, isOpen, onToggle, isLast }: SettingDropdownProps) => {
   const selectedOption = options.find(o => o.value === selectedValue);
   const displayValue = selectedOption ? selectedOption.label : 'Select';

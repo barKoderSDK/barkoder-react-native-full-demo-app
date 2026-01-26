@@ -51,6 +51,7 @@ export const BARCODE_TYPES_2D = [
   { id: 'dotcode', label: 'Dotcode' },
   { id: 'idDocument', label: 'ID Document' },
   { id: 'maxiCode', label: 'MaxiCode' },
+  { id: 'ocrText', label: 'OCR Text' },
   { id: 'pdf417', label: 'PDF 417' },
   { id: 'pdf417Micro', label: 'PDF 417 Micro' },
   { id: 'qr', label: 'QR' },

@@ -14,19 +14,11 @@ import Chevron from '../assets/icons/chevron.svg';
 import BgImage from '../assets/images/BG.svg';
 import LogoBarkoder from '../assets/images/logo_barkoder.svg';
 
-/**
- * AboutScreen Component
- * 
- * Displays information about the barKoder SDK, app version, and device details.
- * Includes a description of the SDK capabilities and a call-to-action button
- * for getting a free trial demo.
- */
 const AboutScreen = () => {
   const navigation = useNavigation();
   const [deviceId, setDeviceId] = useState<string>('');
 
   useEffect(() => {
-    // Get Device ID using react-native-device-info
     DeviceInfo.getUniqueId().then((id) => {
       setDeviceId(id);
     });

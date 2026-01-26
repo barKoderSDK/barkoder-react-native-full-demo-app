@@ -14,16 +14,6 @@ type RootStackParamList = {
   About: undefined;
 };
 
-/**
- * BottomBar Component
- * 
- * A custom bottom navigation bar that provides quick access to key features:
- * - Recent: Navigates to the scan history screen.
- * - Anyscan: A central Floating Action Button (FAB) that launches the scanner in default mode.
- * - About: Opens the Barkoder website.
- * 
- * This component handles safe area insets to ensure proper rendering on devices with notches or home indicators.
- */
 const BottomBar = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();

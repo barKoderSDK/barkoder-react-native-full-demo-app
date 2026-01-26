@@ -59,7 +59,6 @@ const BarcodeDetailsScreen = () => {
     Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
   };
 
-  // Parse MRZ data into individual fields
   const parseMRZData = (text: string) => {
     const fields: { id: string, label: string, value: string }[] = [];
     const lines = text.split('\n');
@@ -69,7 +68,6 @@ const BarcodeDetailsScreen = () => {
       if (match) {
         const key = match[1].trim();
         const value = match[2].trim();
-        // Convert snake_case to Title Case
         const label = key.split('_').map(word => 
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');

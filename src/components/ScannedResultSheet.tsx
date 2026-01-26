@@ -33,7 +33,6 @@ const ScannedResultSheet = ({
 
   if (scannedItems.length === 0 || !showResultSheet) return null;
 
-  // Get unique items and their counts
   const getUniqueItems = () => {
     const uniqueTexts = new Set<string>();
     const uniqueItems: ScannedItem[] = [];
@@ -235,7 +234,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#000',
   },
-  // Expanded modal styles
   expandedContainer: {
     flex: 1,
     backgroundColor: '#fff',

@@ -8,9 +8,6 @@ interface HomeGridProps {
   onItemPress: (item: any) => void;
 }
 
-/**
- * Component to render the grid of barcode types on the Home Screen.
- */
 const HomeGrid: React.FC<HomeGridProps> = ({ sections, onItemPress }) => {
   const renderIcon = (Icon: React.FC<SvgProps>) => {
     return <Icon width={50} height={50} />;

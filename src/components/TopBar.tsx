@@ -10,23 +10,13 @@ import LogoBarkoder from '../assets/images/logo_barkoder.svg';
 import LogoBarkoderWhite from '../assets/images/logo_barkoder_white.svg';
 
 interface TopBarProps {
-  /** Optional custom style for the container */
   style?: ViewStyle;
-  /** Callback when the settings/menu button is pressed */
   onMenuPress?: () => void;
-  /** Callback when the close button is pressed */
   onClose?: () => void;
-  /** Position of the logo: 'center' (default) or 'left' */
   logoPosition?: 'left' | 'center';
-  /** Whether to use a transparent background (for camera/scanner mode) */
   transparent?: boolean;
 }
 
-/**
- * TopBar Component
- * Renders a navigation header with optional Close button, Logo, and Settings button.
- * Supports centering the logo or aligning it to the left.
- */
 const TopBar = ({ 
   style, 
   onMenuPress, 
@@ -36,8 +26,6 @@ const TopBar = ({
 }: TopBarProps) => {
 
   const iconColor = transparent ? '#fff' : '#000';
-
-  // --- Render Helpers ---
 
   const renderCloseButton = () => {
     if (!onClose) return null;
@@ -65,8 +53,6 @@ const TopBar = ({
     );
   };
 
-  // --- Layout Logic ---
-
   return (
     <View style={[styles.topBar, style]}>
       <View style={styles.sideContainer}>
@@ -88,7 +74,6 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: 'transparent',
   },
-  // Styles for 'center' layout
   sideContainer: {
     flex: 1,
     alignItems: 'flex-start',
@@ -98,7 +83,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
-  // Styles for 'left' layout
   leftAlignedContainer: {
     flexDirection: 'row', 
     alignItems: 'center', 
@@ -108,7 +92,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row', 
     alignItems: 'center',
   },
-  // Shared styles
   closeButton: {
     padding: 4,
   },

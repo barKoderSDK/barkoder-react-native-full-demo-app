@@ -16,7 +16,6 @@ import SettingSwitch from './SettingSwitch';
 import SettingDropdown from './SettingDropdown';
 import Chevreon from '../assets/icons/chevron.svg';
 
-// --- Main Component ---
 interface UnifiedSettingsProps {
   visible: boolean;
   settings: ScannerSettings;
@@ -29,11 +28,6 @@ interface UnifiedSettingsProps {
   mode?: string;
 }
 
-/**
- * UnifiedSettings Component
- * 
- * Combines general settings, decoding settings, and barcode type selection into a single screen.
- */
 const UnifiedSettings = ({
   visible,
   settings,
@@ -121,13 +115,6 @@ const UnifiedSettings = ({
         type: 'switch',
         label: 'Scan Deformed Codes',
         key: 'scanDeformed',
-      });
-    }
-    if (isVinMode) {
-      items.push({
-        type: 'switch',
-        label: 'Enable OCR',
-        key: 'enableOCR',
       });
     }
     if (!isARMode) {
@@ -242,7 +229,7 @@ const UnifiedSettings = ({
     } else if (isDotCodeMode) {
         currentTypes = currentTypes.filter(t => t.id === 'dotcode');
     } else if (isVinMode) {
-        currentTypes = currentTypes.filter(t => ['code39', 'code128', 'datamatrix', 'qr'].includes(t.id));
+        currentTypes = currentTypes.filter(t => ['code39', 'code128', 'datamatrix', 'qr', 'ocrText'].includes(t.id));
     } else if (isMrsMode) {
         return [];
     } else if (isMode1D && category === '2D') {
