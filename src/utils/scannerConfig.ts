@@ -20,6 +20,8 @@ export const getInitialEnabledTypes = (mode: string): {[key: string]: boolean} =
             types[t.id] = t.id === 'dotcode';
         } else if (mode === MODES.MRZ) {
             types[t.id] = t.id === 'idDocument';
+        } else if (mode === MODES.VIN) {
+            types[t.id] = ['code39', 'code128', 'qr', 'datamatrix'].includes(t.id);
         } else if (mode === MODES.AR_MODE) {
             types[t.id] = ['qr', 'code128', 'code39', 'upcA', 'upcE', 'ean13', 'ean8'].includes(t.id);
         } else {
@@ -43,7 +45,8 @@ export const getInitialSettings = (currentMode: string): ScannerSettings => {
         continuousScanning: false,
         decodingSpeed: Barkoder.DecodingSpeed.normal,
         resolution: Barkoder.BarkoderResolution.HD,
-        continuousThreshold: 0
+        continuousThreshold: 0,
+        showResultSheet: true,
     };
 
     const modeSettings: Partial<ScannerSettings> = (() => {
@@ -58,6 +61,14 @@ export const getInitialSettings = (currentMode: string): ScannerSettings => {
                 };
                 
             case MODES.VIN:
+                return {
+                    decodingSpeed: Barkoder.DecodingSpeed.slow,
+                    resolution: Barkoder.BarkoderResolution.FHD,
+                    regionOfInterest: true,
+                    scanDeformed: true,
+                    enableOCR: true,
+                };
+                
             case MODES.DPM:
                 return {
                     decodingSpeed: Barkoder.DecodingSpeed.slow,
@@ -124,6 +135,10 @@ export const createBarcodeConfig = (typeId: string, enabled: boolean) => {
             enabled,
             masterChecksum: Barkoder.IdDocumentMasterChecksumType.disabled
         });
+    }
+    
+    if (typeId === 'ocrText') {
+        return new Barkoder.BarcodeConfig({ enabled });
     }
     
     return new Barkoder.BarcodeConfig({ enabled });

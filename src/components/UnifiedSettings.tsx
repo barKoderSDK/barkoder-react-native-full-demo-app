@@ -104,6 +104,11 @@ const UnifiedSettings = ({
       label: 'Vibrate on Success',
       key: 'vibrateOnSuccess',
     });
+    items.push({
+      type: 'switch',
+      label: 'Show Result Sheet',
+      key: 'showResultSheet',
+    });
     if (!isDpmMode && !isARMode && !isVinMode && !isMrsMode && !isDotCodeMode) {
       items.push({
         type: 'switch',
@@ -116,6 +121,13 @@ const UnifiedSettings = ({
         type: 'switch',
         label: 'Scan Deformed Codes',
         key: 'scanDeformed',
+      });
+    }
+    if (isVinMode) {
+      items.push({
+        type: 'switch',
+        label: 'Enable OCR',
+        key: 'enableOCR',
       });
     }
     if (!isARMode) {

@@ -123,6 +123,9 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    // ML KIT for OCR VIN support
+    implementation "com.google.mlkit:text-recognition:16.0.1"
 }
 
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"

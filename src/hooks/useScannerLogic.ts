@@ -201,6 +201,14 @@ export const useScannerLogic = (mode: string) => {
         } else if (mode === MODES.VIN) {
             barkoder.setEnableVINRestrictions(true);
             barkoder.setRegionOfInterest(0, 35, 100, 30);
+            // OCR support for VIN
+            if (settings.enableOCR) {
+                barkoder.setCustomOption('enable_ocr_functionality', 1);
+                barkoder.setBarcodeTypeEnabled(Barkoder.BarcodeType.ocrText, true);
+            } else {
+                barkoder.setCustomOption('enable_ocr_functionality', 0);
+                barkoder.setBarcodeTypeEnabled(Barkoder.BarcodeType.ocrText, false);
+            }
         } else if (mode === MODES.DPM) {
             barkoder.setBarcodeTypeEnabled(Barkoder.BarcodeType.datamatrix, true);
             barkoder.setDatamatrixDpmModeEnabled(true);

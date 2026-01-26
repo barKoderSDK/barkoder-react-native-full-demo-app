@@ -41,4 +41,6 @@ export interface ScannerSettings {
   arOverlayRefresh?: Barkoder.BarkoderAROverlayRefresh;
   arDoubleTapToFreeze?: boolean;
   continuousThreshold?: number; // 0-10, -1 for unlimited
+  enableOCR?: boolean; // For VIN OCR support
+  showResultSheet?: boolean; // Show/hide bottom result sheet
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Linking, Alert, Image } from 'react-native';
+import { View, StyleSheet, Alert, Image } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarkoderView } from 'barkoder-react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -13,7 +13,6 @@ import UnifiedSettings from '../components/UnifiedSettings';
 import PauseOverlay from '../components/PauseOverlay';
 import ScannedResultSheet from '../components/ScannedResultSheet';
 import BottomControls from '../components/BottomControls';
-import ScannedItemsList from '../components/ScannedItemsList';
 import { useScannerLogic } from '../hooks/useScannerLogic';
 import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/constants';
 
@@ -61,17 +60,11 @@ const ScannerScreen = () => {
     setActiveButton('settings');
   };
 
-  const handleSearch = () => {
-    if (scannedItems.length > 0) {
-        const url = 'https://www.google.com/search?q=' + encodeURIComponent(scannedItems[0].text);
-        Linking.openURL(url).catch(err => console.error("Couldn't load page", err));
-    }
-  };
-
   const handleCopy = () => {
     if (scannedItems.length > 0) {
-        Clipboard.setString(scannedItems[0].text);
-        Alert.alert('Copied', 'Barcode copied to clipboard');
+        const allText = scannedItems.map(item => item.text).join('\n');
+        Clipboard.setString(allText);
+        Alert.alert('Copied', `${scannedItems.length} barcode(s) copied to clipboard`);
     }
   };
 
@@ -151,8 +144,6 @@ const ScannerScreen = () => {
         />
       </View>
       
-      <ScannedItemsList scannedItems={scannedItems} />
-      
       <BottomControls
         activeBarcodeText={activeBarcodeText}
         zoomLevel={zoomLevel}
@@ -165,16 +156,13 @@ const ScannerScreen = () => {
       <View style={styles.bottomContainer}>
         <ScannedResultSheet
           scannedItems={scannedItems}
-          onClose={() => {
-            setScannedItems([]);
-            setIsScanningPaused(false);
-            setFrozenImage(null);
-            startScanning();
-          }}
           onCopy={handleCopy}
           onCSV={handleCSV}
-          onSearch={handleSearch}
           onDetails={(item) => navigation.navigate('BarcodeDetails', { item })}
+          showResultSheet={settings.showResultSheet}
+          onClose={() => {
+            setScannedItems([]);
+          }}
         />
         
         <View style={[styles.bottomInset, { height: insets.bottom }]} />
