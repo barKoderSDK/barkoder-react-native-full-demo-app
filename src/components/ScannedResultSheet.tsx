@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, LayoutAnimation, Platform, UIManager } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import IconCSV from '../assets/icons/icon_csv.svg';
@@ -14,22 +14,38 @@ interface ScannedItem {
 
 interface ScannedResultSheetProps {
   scannedItems: ScannedItem[];
+  lastScanCount?: number;
   onCopy: () => void;
   onCSV: () => void;
   onDetails: (item: ScannedItem) => void;
   showResultSheet?: boolean;
   onClose: () => void;
+  onExpandedChange?: (expanded: boolean) => void;
 }
 
 const ScannedResultSheet = ({
   scannedItems,
+  lastScanCount,
   onCopy,
   onCSV,
   onDetails,
   showResultSheet = true,
   onClose,
+  onExpandedChange,
 }: ScannedResultSheetProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
+
+  const setExpanded = (next: boolean) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsExpanded(next);
+    onExpandedChange?.(next);
+  };
 
   if (scannedItems.length === 0 || !showResultSheet) return null;
 
@@ -54,6 +70,7 @@ const ScannedResultSheet = ({
   const uniqueItems = getUniqueItems();
   const totalCount = scannedItems.length;
   const uniqueCount = uniqueItems.length;
+  const scanCount = lastScanCount && lastScanCount > 0 ? lastScanCount : uniqueCount;
 
   const parseMRZData = (text: string) => {
     const fields: { id: string, label: string, value: string }[] = [];
@@ -99,7 +116,10 @@ const ScannedResultSheet = ({
     return (
       <TouchableOpacity
         key={`${item.text}-${index}`}
-        style={styles.barcodeCard}
+        style={[
+          styles.barcodeCard,
+          index === 0 ? styles.barcodeCardPrimary : styles.barcodeCardSecondary,
+        ]}
         onPress={() => onDetails(item)}
         activeOpacity={0.7}
       >
@@ -108,12 +128,10 @@ const ScannedResultSheet = ({
             <Text style={styles.barcodeType}>{item.type}</Text>
             <Text style={styles.barcodeText}>{getDisplayText(item)}</Text>
           </View>
-          {count > 1 && (
-            <View style={styles.countContainer}>
-              <Text style={styles.countText}>({count})</Text>
-              <MaterialIcons name="info-outline" size={20} color="#6C757D" />
-            </View>
-          )}
+          <View style={styles.countContainer}>
+            {count > 1 && <Text style={styles.countText}>({count})</Text>}
+            <MaterialIcons name="info-outline" size={20} color="#6C757D" />
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -123,16 +141,20 @@ const ScannedResultSheet = ({
     <>
       <View style={styles.headerRow}>
         <Text style={styles.headerText}>
-          {uniqueCount} result{uniqueCount === 1 ? '' : 's'} found ({totalCount} total)
+          {scanCount} result{scanCount === 1 ? '' : 's'} found ({totalCount} total)
         </Text>
-        <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <MaterialIcons name="close" size={24} color="#000" />
+        <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <MaterialIcons name="close" size={20} color="#6C757D" />
         </TouchableOpacity>
       </View>
       
-      <View style={styles.itemsContainer}>
+      <ScrollView
+        style={isExpanded ? styles.itemsScrollExpanded : styles.itemsScroll}
+        contentContainerStyle={styles.itemsContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {uniqueItems.map((item, index) => renderBarcodeItem(item, index))}
-      </View>
+      </ScrollView>
 
       <View style={styles.actionButtonsContainer}>
         <TouchableOpacity style={styles.actionBtn} onPress={onCopy}>
@@ -143,9 +165,9 @@ const ScannedResultSheet = ({
           <IconCSV width={20} height={20} />
           <Text style={styles.actionBtnText}>CSV</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionBtn} onPress={() => setIsExpanded(true)}>
+        <TouchableOpacity style={styles.actionBtn} onPress={() => setExpanded(!isExpanded)}>
           <IconExpandAll width={20} height={20} />
-          <Text style={styles.actionBtnText}>Expand</Text>
+          <Text style={styles.actionBtnText}>{isExpanded ? 'Collapse' : 'Expand'}</Text>
         </TouchableOpacity>
       </View>
     </>
@@ -159,38 +181,17 @@ const ScannedResultSheet = ({
 
       <Modal
         visible={isExpanded}
-        animationType="slide"
-        onRequestClose={() => setIsExpanded(false)}
+        transparent
+        animationType="fade"
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
+        onRequestClose={() => setExpanded(false)}
       >
-        <SafeAreaView style={styles.expandedContainer} edges={['top', 'bottom']}>
-          <View style={styles.expandedHeader}>
-            <Text style={styles.expandedHeaderText}>
-              {uniqueCount} result{uniqueCount === 1 ? '' : 's'} found ({totalCount} total)
-            </Text>
-          </View>
-          
-          <ScrollView 
-            style={styles.expandedScrollContainer}
-            contentContainerStyle={styles.expandedScrollContent}
-          >
-            {uniqueItems.map((item, index) => renderBarcodeItem(item, index))}
-          </ScrollView>
-
-          <View style={styles.expandedActionButtonsContainer}>
-            <TouchableOpacity style={styles.actionBtn} onPress={onCopy}>
-              <IconCopy width={20} height={20} />
-              <Text style={styles.actionBtnText}>Copy</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionBtn} onPress={onCSV}>
-              <IconCSV width={20} height={20} />
-              <Text style={styles.actionBtnText}>CSV</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionBtn} onPress={() => setIsExpanded(false)}>
-              <IconExpandAll width={20} height={20} />
-              <Text style={styles.actionBtnText}>Expand</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
+        <View style={styles.expandedOverlay} pointerEvents="box-none">
+          <SafeAreaView style={styles.expandedSheet} edges={['bottom']}>
+            {sheetContent}
+          </SafeAreaView>
+        </View>
       </Modal>
     </>
   );
@@ -204,6 +205,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingHorizontal: 20,
     paddingBottom: 24,
+    zIndex: 20,
   },
   headerRow: {
     flexDirection: 'row',
@@ -212,19 +214,30 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   headerText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '400',
     color: '#00000088',
   },
+  itemsScroll: {
+    maxHeight: 180,
+  },
+  itemsScrollExpanded: {
+    flex: 1,
+  },
   itemsContainer: {
-    gap: 12,
-    marginBottom: 8,
+    gap: 8,
+    marginBottom: 4,
   },
   barcodeCard: {
-    backgroundColor: '#D4EDDA',
     borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  barcodeCardPrimary: {
+    backgroundColor: '#DFF4D7',
+  },
+  barcodeCardSecondary: {
+    backgroundColor: '#F3F3F3',
   },
   barcodeContent: {
     flexDirection: 'row',
@@ -236,13 +249,13 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   barcodeType: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6C757D',
     fontWeight: '400',
     marginBottom: 4,
   },
   barcodeText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#000000DE',
   },
@@ -252,7 +265,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   countText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#6C757D',
   },
@@ -260,8 +273,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
     marginTop: 8,
   },
   actionBtn: {
@@ -269,39 +280,24 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   actionBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#000',
   },
-  expandedContainer: {
+  expandedOverlay: {
     flex: 1,
+    justifyContent: 'flex-end',
+    paddingTop: 72,
+    backgroundColor: 'transparent',
+  },
+  expandedSheet: {
     backgroundColor: '#fff',
-  },
-  expandedHeader: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 14,
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    alignItems: 'center',
-  },
-  expandedHeaderText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000DE',
-  },
-  expandedScrollContainer: {
-    flex: 1,
-  },
-  expandedScrollContent: {
-    padding: 20,
-    gap: 12,
-  },
-  expandedActionButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    paddingBottom: 24,
+    height: '82%',
+    minHeight: '82%',
   },
 });
 

@@ -16,7 +16,7 @@ export interface HomeSection {
 
 export type RootStackParamList = {
   Home: undefined;
-  Scanner: { mode: string };
+  Scanner: { mode: string; sessionId?: number };
   BarcodeDetails: { item: { text: string; type: string; image?: string } };
   About: undefined;
 };

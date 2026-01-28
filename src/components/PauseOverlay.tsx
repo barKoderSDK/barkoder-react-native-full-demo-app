@@ -1,23 +1,26 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import TouchIcon from '../assets/icons/touch_icon.svg';
 
 interface PauseOverlayProps {
   onResume: () => void;
+  isSheetExpanded?: boolean;
 }
 
-const PauseOverlay: React.FC<PauseOverlayProps> = ({ onResume }) => {
+const PauseOverlay: React.FC<PauseOverlayProps> = ({ isSheetExpanded }) => {
   return (
-    <TouchableOpacity
-      style={styles.pauseOverlay}
-      activeOpacity={1}
-      onPress={onResume}
+    <View
+      style={[
+        styles.pauseOverlay,
+        isSheetExpanded ? styles.pauseOverlayExpanded : styles.pauseOverlayCentered,
+      ]}
+      pointerEvents="none"
     >
       <View style={styles.messageContainer}>
-        <TouchIcon width={24} height={24} fill="#fff" style={styles.icon} />
+        <TouchIcon width={18} height={18} fill="#fff" style={styles.icon} />
         <Text style={styles.pauseText}>Tap anywhere to continue</Text>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 };
 
@@ -25,25 +28,31 @@ const styles = StyleSheet.create({
   pauseOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.0)',
-    justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
+    zIndex: 25,
+  },
+  pauseOverlayCentered: {
+    justifyContent: 'center',
+  },
+  pauseOverlayExpanded: {
+    justifyContent: 'flex-start',
+    paddingTop: 100,
   },
   messageContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 16,
+    backgroundColor: 'rgba(120, 120, 120, 0.65)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   icon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   pauseText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
   },
 });
 

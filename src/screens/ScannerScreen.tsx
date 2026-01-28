@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, Image, BackHandler } from 'react-native';
+import { View, StyleSheet, Alert, Image, BackHandler, Pressable } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarkoderView } from 'barkoder-react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -17,7 +17,7 @@ import { useScannerLogic } from '../hooks/useScannerLogic';
 import { BARCODE_TYPES_1D, BARCODE_TYPES_2D, MODES } from '../constants/constants';
 
 type RootStackParamList = {
-  Scanner: { mode: string };
+  Scanner: { mode: string; sessionId?: number };
   BarcodeDetails: { item: { text: string; type: string; image?: string } };
 };
 
@@ -29,16 +29,19 @@ const ALL_TYPES = [...BARCODE_TYPES_1D, ...BARCODE_TYPES_2D];
 const ScannerScreen = () => {
   const navigation = useNavigation<ScannerNavigationProp>();
   const route = useRoute<ScannerScreenRouteProp>();
-  const { mode } = route.params || { mode: 'v1' };
+  const { mode, sessionId } = route.params || { mode: 'v1' };
   const insets = useSafeAreaInsets();
   
   const [activeButton, setActiveButton] = useState<string | null>(null);
+  const [isResultSheetExpanded, setIsResultSheetExpanded] = useState(false);
+  const [isResultSheetHidden, setIsResultSheetHidden] = useState(false);
 
   const {
     barkoderRef,
     scannedItems,
     setScannedItems,
     enabledTypes,
+    lastScanCount,
     settings,
     isFlashOn,
     zoomLevel,
@@ -51,11 +54,25 @@ const ScannerScreen = () => {
     onToggleBarcodeType,
     onEnableAllBarcodeTypes,
     resetConfig,
+    resetSession,
     toggleFlash,
     toggleZoom,
     toggleCamera,
     startScanning,
   } = useScannerLogic(mode);
+
+  useEffect(() => {
+    if (sessionId) {
+      resetConfig();
+      resetSession();
+    }
+  }, [sessionId, resetConfig, resetSession]);
+
+  useEffect(() => {
+    if (scannedItems.length > 0) {
+      setIsResultSheetHidden(false);
+    }
+  }, [scannedItems.length]);
 
   useEffect(() => {
     if (activeButton !== 'settings') return;
@@ -106,6 +123,7 @@ const ScannerScreen = () => {
 
   const activeTypes = ALL_TYPES.filter(t => enabledTypes[t.id]);
   const activeBarcodeText = activeTypes.map(t => t.label).join(', ');
+  const isResultSheetOpen = settings.showResultSheet && scannedItems.length > 0 && !isResultSheetHidden;
 
   return (
     <View style={styles.container}>
@@ -124,11 +142,25 @@ const ScannerScreen = () => {
       )}
 
       {isScanningPaused && (
-        <PauseOverlay onResume={() => {
+        <Pressable
+          style={styles.scannerTapOverlay}
+          onPress={() => {
             setIsScanningPaused(false);
             setFrozenImage(null);
             startScanning();
-        }} />
+          }}
+        />
+      )}
+
+      {isScanningPaused && (
+        <PauseOverlay
+          onResume={() => {
+            setIsScanningPaused(false);
+            setFrozenImage(null);
+            startScanning();
+          }}
+          isSheetExpanded={isResultSheetExpanded}
+        />
       )}
 
       {/* Top Bar Overlay */}
@@ -163,25 +195,29 @@ const ScannerScreen = () => {
         />
       </View>
       
-      <BottomControls
-        activeBarcodeText={activeBarcodeText}
-        zoomLevel={zoomLevel}
-        isFlashOn={isFlashOn}
-        onToggleZoom={toggleZoom}
-        onToggleFlash={toggleFlash}
-        onToggleCamera={toggleCamera}
-      />
+      {!isResultSheetOpen && (
+        <BottomControls
+          activeBarcodeText={activeBarcodeText}
+          zoomLevel={zoomLevel}
+          isFlashOn={isFlashOn}
+          onToggleZoom={toggleZoom}
+          onToggleFlash={toggleFlash}
+          onToggleCamera={toggleCamera}
+        />
+      )}
       
       <View style={styles.bottomContainer}>
         <ScannedResultSheet
           scannedItems={scannedItems}
+          lastScanCount={lastScanCount}
           onCopy={handleCopy}
           onCSV={handleCSV}
           onDetails={(item) => navigation.navigate('BarcodeDetails', { item })}
-          showResultSheet={settings.showResultSheet}
+          showResultSheet={isResultSheetOpen}
           onClose={() => {
-            setScannedItems([]);
+            setIsResultSheetHidden(true);
           }}
+          onExpandedChange={setIsResultSheetExpanded}
         />
         
         <View style={[styles.bottomInset, { height: insets.bottom }]} />
@@ -206,6 +242,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'transparent',
     zIndex: 30,
+  },
+  scannerTapOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 15,
   },
   topBarBackground: {
     backgroundColor: 'transparent',

@@ -9,7 +9,7 @@ import IconStart from '../assets/icons/start.svg';
 
 type RootStackParamList = {
   Home: undefined;
-  Scanner: { mode: string };
+  Scanner: { mode: string; sessionId?: number };
   History: undefined;
   About: undefined;
 };
@@ -37,7 +37,7 @@ const BottomBar = () => {
         <View style={styles.centerTabItem}>
             <TouchableOpacity
                 style={styles.fab}
-                onPress={() => navigation.navigate('Scanner', { mode: 'v1' })}
+                onPress={() => navigation.navigate('Scanner', { mode: 'v1', sessionId: Date.now() })}
             >
                 <IconStart width={28} height={28} color="#fff" />
             </TouchableOpacity>

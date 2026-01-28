@@ -16,10 +16,12 @@ const ALL_TYPES = [...BARCODE_TYPES_1D, ...BARCODE_TYPES_2D];
 
 export const useScannerLogic = (mode: string) => {
     const [scannedItems, setScannedItems] = useState<Array<{text: string, type: string, image?: string}>>([]);
+    const [lastScanCount, setLastScanCount] = useState(0);
     const [enabledTypes, setEnabledTypes] = useState<{[key: string]: boolean}>(() => getInitialEnabledTypes(mode));
     const [isScanningPaused, setIsScanningPaused] = useState(false);
     const [frozenImage, setFrozenImage] = useState<string | null>(null);
     const [settings, setSettings] = useState<ScannerSettings>(() => getInitialSettings(mode));
+    const settingsRef = useRef(settings);
     const barkoderRef = useRef<Barkoder | null>(null);
     const { updateBarkoderConfig, toggleBarcodeType, enableAllBarcodeTypes } = useBarcodeConfig(barkoderRef);
     const { isFlashOn, zoomLevel, selectedCameraId, toggleFlash, toggleZoom, toggleCamera } = useCameraControls(barkoderRef);
@@ -27,9 +29,16 @@ export const useScannerLogic = (mode: string) => {
     const startScanning = useCallback(() => {
         barkoderRef.current?.startScanning((result) => {
           if (result.decoderResults && result.decoderResults.length > 0) {
-            const newResult = result.decoderResults[0];
+            const decoderResults = result.decoderResults;
+            const fullImageBase64 = result.resultImageAsBase64;
+            const shouldPause = !settingsRef.current.continuousScanning;
+
+            if (shouldPause && barkoderRef.current) {
+                barkoderRef.current.stopScanning();
+                setIsScanningPaused(true);
+            }
             
-            let fullImage = result.resultImageAsBase64;
+            let fullImage = fullImageBase64;
             if (fullImage && !fullImage.startsWith('data:')) {
                 fullImage = `data:image/jpeg;base64,${fullImage}`;
             }
@@ -43,29 +52,22 @@ export const useScannerLogic = (mode: string) => {
                 displayImage = thumb;
             }
     
-            HistoryService.addScan({
-                text: newResult.textualData,
-                type: newResult.barcodeTypeName,
-                image: displayImage || undefined,
+            const newItems = decoderResults.map((decoded) => {
+                const item = {
+                    text: decoded.textualData,
+                    type: decoded.barcodeTypeName,
+                    image: displayImage || undefined
+                };
+                HistoryService.addScan(item);
+                return item;
             });
-    
-            const newItem = {
-                text: newResult.textualData,
-                type: newResult.barcodeTypeName,
-                image: displayImage || undefined
-            };
             
-            setScannedItems(prev => [newItem, ...prev]);
-    
-            setSettings(currentSettings => {
-                if (!currentSettings.continuousScanning) {
-                    setIsScanningPaused(true);
-                    if (fullImage) {
-                        setFrozenImage(fullImage);
-                    }
-                }
-                return currentSettings;
-            });
+            setScannedItems(prev => [...newItems, ...prev]);
+            setLastScanCount(newItems.length);
+
+            if (shouldPause && fullImage) {
+                setFrozenImage(fullImage);
+            }
           }
         });
     }, []);
@@ -189,6 +191,7 @@ export const useScannerLogic = (mode: string) => {
         barkoder.setBarkoderResolution(settings.resolution);
         barkoder.setCloseSessionOnResultEnabled(!settings.continuousScanning);
         barkoder.setBarcodeThumbnailOnResultEnabled(true);
+        barkoder.setMaximumResultsCount(200);
         
         if (settings.continuousScanning) {
             barkoder.setThresholdBetweenDuplicatesScans(settings.continuousThreshold ?? 0);
@@ -199,7 +202,6 @@ export const useScannerLogic = (mode: string) => {
         }
 
         if (mode === MODES.MULTISCAN) {
-            barkoder.setMaximumResultsCount(200);
             barkoder.setMulticodeCachingDuration(3000);
             barkoder.setMulticodeCachingEnabled(true);
         } else if (mode === MODES.VIN) {
@@ -235,9 +237,13 @@ export const useScannerLogic = (mode: string) => {
     }, [enabledTypes, settings, mode, scanImagePressed, startScanning]);
 
     useEffect(() => {
+        settingsRef.current = settings;
+    }, [settings]);
+
+    useEffect(() => {
         const loadSettings = async () => {
           const saved = await SettingsService.getSettings(mode);
-          if (saved) {
+          if (saved) {            
             if (saved.enabledTypes) {
                 const sanitizedEnabledTypes = { ...saved.enabledTypes };
                 if (mode !== MODES.VIN) {
@@ -252,6 +258,13 @@ export const useScannerLogic = (mode: string) => {
         };
         loadSettings();
     }, [mode]);
+
+    const resetSession = useCallback(() => {
+        setScannedItems([]);
+        setLastScanCount(0);
+        setIsScanningPaused(false);
+        setFrozenImage(null);
+    }, []);
     
     useEffect(() => {
         const save = async () => {
@@ -269,6 +282,7 @@ export const useScannerLogic = (mode: string) => {
         scannedItems,
         setScannedItems,
         enabledTypes,
+        lastScanCount,
         settings,
         isFlashOn,
         zoomLevel,
@@ -287,6 +301,8 @@ export const useScannerLogic = (mode: string) => {
         toggleCamera,
         startScanning,
         scanImagePressed
+        ,
+        resetSession
     };
 };
     

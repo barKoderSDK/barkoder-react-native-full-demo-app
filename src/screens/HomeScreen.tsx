@@ -53,7 +53,7 @@ const HomeScreen = () => {
     } else if (item.action === 'url' && item.url) {
       Linking.openURL(item.url);
     } else if (item.mode) {
-      navigation.navigate('Scanner', { mode: item.mode });
+      navigation.navigate('Scanner', { mode: item.mode, sessionId: Date.now() });
     }
   };
 
