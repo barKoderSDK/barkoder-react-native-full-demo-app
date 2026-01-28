@@ -55,14 +55,7 @@ const UnifiedSettings = ({
   const getGeneralSettings = () => {
     const items: any[] = [];
 
-    if (
-      !isDpmMode &&
-      !isARMode &&
-      !isMultiScanMode &&
-      !isVinMode &&
-      !isMrsMode &&
-      !isDotCodeMode
-    ) {
+    if (mode === 'v1') {
       items.push({
         type: 'switch',
         label: 'Composite Mode',
@@ -236,6 +229,10 @@ const UnifiedSettings = ({
         return [];
     } else if (isMode2D && category === '1D') {
         return [];
+    }
+
+    if (!isVinMode) {
+        currentTypes = currentTypes.filter(t => t.id !== 'ocrText');
     }
 
     return currentTypes;

@@ -13,9 +13,10 @@ export const getInitialEnabledTypes = (mode: string): {[key: string]: boolean} =
         if (mode === MODES.MODE_1D) {
             types[t.id] = BARCODE_TYPES_1D.some(b => b.id === t.id);
         } else if (mode === MODES.MODE_2D) {
-            types[t.id] = BARCODE_TYPES_2D.some(b => b.id === t.id);
+            const is2DType = BARCODE_TYPES_2D.some(b => b.id === t.id);
+            types[t.id] = is2DType && t.id !== 'ocrText';
         } else if (mode === MODES.CONTINUOUS || mode === 'v1') {
-            types[t.id] = true;
+            types[t.id] = t.id !== 'ocrText';
         } else if (mode === MODES.DOTCODE) {
             types[t.id] = t.id === 'dotcode';
         } else if (mode === MODES.MRZ) {
@@ -25,7 +26,7 @@ export const getInitialEnabledTypes = (mode: string): {[key: string]: boolean} =
         } else if (mode === MODES.AR_MODE) {
             types[t.id] = ['qr', 'code128', 'code39', 'upcA', 'upcE', 'ean13', 'ean8'].includes(t.id);
         } else {
-            types[t.id] = DEFAULT_ENABLED.includes(t.id); 
+            types[t.id] = t.id !== 'ocrText' && DEFAULT_ENABLED.includes(t.id); 
         }
     });
     
@@ -76,7 +77,7 @@ export const getInitialSettings = (currentMode: string): ScannerSettings => {
                 };
                 
             case MODES.MRZ:
-                return { continuousScanning: true };
+                return { continuousScanning: false };
                 
             case MODES.AR_MODE:
                 return {

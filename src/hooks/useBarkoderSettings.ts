@@ -13,7 +13,8 @@ export const useBarkoderSettings = (
         
         barkoderRef.current.setImageResultEnabled(true);
         barkoderRef.current.setBarcodeThumbnailOnResultEnabled(true);
-        barkoderRef.current.setEnableComposite(settings.compositeMode ? 1 : 0);
+        const compositeEnabled = mode === 'v1' ? settings.compositeMode : false;
+        barkoderRef.current.setEnableComposite(compositeEnabled ? 1 : 0);
         barkoderRef.current.setPinchToZoomEnabled(settings.pinchToZoom);
         barkoderRef.current.setLocationInPreviewEnabled(settings.locationInPreview);
         barkoderRef.current.setRegionOfInterestVisible(settings.regionOfInterest);
@@ -56,9 +57,11 @@ export const useBarkoderSettings = (
         barkoderRef.current.setBarcodeThumbnailOnResultEnabled(true);
     
         switch (key) {
-            case 'compositeMode':
-                barkoderRef.current.setEnableComposite(value ? 1 : 0);
+            case 'compositeMode': {
+                const compositeEnabled = mode === 'v1' ? value : false;
+                barkoderRef.current.setEnableComposite(compositeEnabled ? 1 : 0);
                 break;
+            }
             case 'pinchToZoom':
                 barkoderRef.current.setPinchToZoomEnabled(value);
                 break;

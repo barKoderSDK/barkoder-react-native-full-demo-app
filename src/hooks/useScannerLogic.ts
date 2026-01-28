@@ -83,6 +83,9 @@ export const useScannerLogic = (mode: string) => {
     }, [settings, updateSingleSetting, clearPauseState]);
 
     const onToggleBarcodeType = useCallback((typeId: string, enabled: boolean) => {
+        if (typeId === 'ocrText' && mode !== MODES.VIN) {
+            return;
+        }
         const newEnabledTypes = toggleBarcodeType(typeId, enabled, enabledTypes);
         setEnabledTypes(newEnabledTypes);
         
@@ -93,6 +96,9 @@ export const useScannerLogic = (mode: string) => {
 
     const onEnableAllBarcodeTypes = useCallback((enabled: boolean, category: '1D' | '2D') => {
         const newEnabledTypes = enableAllBarcodeTypes(enabled, category, enabledTypes);
+        if (mode !== MODES.VIN) {
+            newEnabledTypes.ocrText = false;
+        }
         setEnabledTypes(newEnabledTypes);
         
         if (category === '2D' && mode === MODES.VIN && barkoderRef.current) {
@@ -175,7 +181,8 @@ export const useScannerLogic = (mode: string) => {
           })
         );
     
-        barkoder.setEnableComposite(settings.compositeMode ? 1 : 0);
+        const compositeEnabled = mode === 'v1' ? settings.compositeMode : false;
+        barkoder.setEnableComposite(compositeEnabled ? 1 : 0);
         barkoder.setUpcEanDeblurEnabled(settings.scanBlurred);
         barkoder.setEnableMisshaped1DEnabled(settings.scanDeformed);
         barkoder.setDecodingSpeed(settings.decodingSpeed);
@@ -187,6 +194,10 @@ export const useScannerLogic = (mode: string) => {
             barkoder.setThresholdBetweenDuplicatesScans(settings.continuousThreshold ?? 0);
         }
     
+        if (mode !== MODES.VIN) {
+            barkoder.setCustomOption('enable_ocr_functionality', 0);
+        }
+
         if (mode === MODES.MULTISCAN) {
             barkoder.setMaximumResultsCount(200);
             barkoder.setMulticodeCachingDuration(3000);
@@ -226,9 +237,13 @@ export const useScannerLogic = (mode: string) => {
     useEffect(() => {
         const loadSettings = async () => {
           const saved = await SettingsService.getSettings(mode);
-          if (saved) {            
+          if (saved) {
             if (saved.enabledTypes) {
-                setEnabledTypes(saved.enabledTypes);
+                const sanitizedEnabledTypes = { ...saved.enabledTypes };
+                if (mode !== MODES.VIN) {
+                    sanitizedEnabledTypes.ocrText = false;
+                }
+                setEnabledTypes(sanitizedEnabledTypes);
             }
             if (saved.scannerSettings) {
                 setSettings(saved.scannerSettings);

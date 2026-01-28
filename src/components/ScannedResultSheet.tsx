@@ -55,6 +55,44 @@ const ScannedResultSheet = ({
   const totalCount = scannedItems.length;
   const uniqueCount = uniqueItems.length;
 
+  const parseMRZData = (text: string) => {
+    const fields: { id: string, label: string, value: string }[] = [];
+    const lines = text.split('\n');
+    
+    lines.forEach(line => {
+      const match = line.match(/^([^:]+):\s*(.+)$/);
+      if (match) {
+        const key = match[1].trim();
+        const value = match[2].trim();
+        const label = key.split('_').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+        fields.push({ id: key, label, value });
+      }
+    });
+    
+    return fields;
+  };
+
+  const findMrzField = (fields: Array<{ id: string, label: string, value: string }>, keys: string[]) => {
+    const loweredKeys = keys.map(key => key.toLowerCase());
+    return fields.find(field => {
+      const haystack = `${field.id} ${field.label}`.toLowerCase();
+      return loweredKeys.some(key => haystack.includes(key));
+    });
+  };
+
+  const getDisplayText = (item: ScannedItem) => {
+    if (item.type.toLowerCase() !== 'mrz') return item.text;
+
+    const mrzFields = parseMRZData(item.text);
+    const mrzName = findMrzField(mrzFields, ['name', 'given name', 'given names', 'first name', 'forename']);
+    const mrzSurname = findMrzField(mrzFields, ['surname', 'last name', 'family name']);
+    const nameParts = [mrzName?.value, mrzSurname?.value].filter(Boolean);
+
+    return nameParts.length > 0 ? nameParts.join(' ') : 'Name/Surname not found';
+  };
+
   const renderBarcodeItem = (item: ScannedItem, index: number) => {
     const count = getItemCount(item.text);
     
@@ -68,7 +106,7 @@ const ScannedResultSheet = ({
         <View style={styles.barcodeContent}>
           <View style={styles.barcodeInfo}>
             <Text style={styles.barcodeType}>{item.type}</Text>
-            <Text style={styles.barcodeText}>{item.text}</Text>
+            <Text style={styles.barcodeText}>{getDisplayText(item)}</Text>
           </View>
           {count > 1 && (
             <View style={styles.countContainer}>

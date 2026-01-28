@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Alert, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Alert, Image, BackHandler } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarkoderView } from 'barkoder-react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -14,7 +14,7 @@ import PauseOverlay from '../components/PauseOverlay';
 import ScannedResultSheet from '../components/ScannedResultSheet';
 import BottomControls from '../components/BottomControls';
 import { useScannerLogic } from '../hooks/useScannerLogic';
-import { BARCODE_TYPES_1D, BARCODE_TYPES_2D } from '../constants/constants';
+import { BARCODE_TYPES_1D, BARCODE_TYPES_2D, MODES } from '../constants/constants';
 
 type RootStackParamList = {
   Scanner: { mode: string };
@@ -35,6 +35,7 @@ const ScannerScreen = () => {
   const [activeButton, setActiveButton] = useState<string | null>(null);
 
   const {
+    barkoderRef,
     scannedItems,
     setScannedItems,
     enabledTypes,
@@ -56,7 +57,20 @@ const ScannerScreen = () => {
     startScanning,
   } = useScannerLogic(mode);
 
+  useEffect(() => {
+    if (activeButton !== 'settings') return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setActiveButton(null);
+      if (mode !== MODES.GALLERY) {
+        startScanning();
+      }
+      return true;
+    });
+    return () => subscription.remove();
+  }, [activeButton, mode, startScanning]);
+
   const handleMenuPress = () => {
+    barkoderRef.current?.stopScanning();
     setActiveButton('settings');
   };
 
@@ -140,7 +154,12 @@ const ScannerScreen = () => {
             onEnableAll={onEnableAllBarcodeTypes}
             onResetConfig={resetConfig}
             mode={mode}
-            onClose={() => setActiveButton(null)}
+            onClose={() => {
+              setActiveButton(null);
+              if (mode !== MODES.GALLERY) {
+                startScanning();
+              }
+            }}
         />
       </View>
       
